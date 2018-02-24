@@ -21,17 +21,12 @@ module Aerospike
   class Connection # :nodoc:
 
     def initialize(host, port, timeout = 30, ssl_options = {})
-
-      connect(host, port, timeout, ssl_options).tap do |socket|
-        @socket = socket
-        @timeout = timeout
-      end
-
-      self
+      @socket = connect(host, port, timeout, ssl_options)
+      @timeout = timeout
     end
 
     def connect(host, port, timeout, ssl_options = {})
-      socket = if ssl_options.any? && ssl_options[:enable] == true
+      socket = if !ssl_options.nil? && ssl_options[:enable] == true
         ::Aerospike::Socket::SSL.new(host, port, timeout, ssl_options)
       else
         ::Aerospike::Socket::TCP.new(host, port, timeout)
@@ -39,7 +34,6 @@ module Aerospike
 
       begin
         socket.connect_nonblock
-        socket
       rescue IO::WaitWritable, Errno::EINPROGRESS
         # Block until the socket is ready, then try again
         IO.select(nil, [socket.socket], nil, timeout.to_f)
@@ -52,9 +46,6 @@ module Aerospike
         end
         socket
       end
-    rescue => e
-      puts e.inspect
-      raise
     end
 
     def write(buffer, length)
