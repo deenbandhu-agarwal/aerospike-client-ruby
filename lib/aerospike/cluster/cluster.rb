@@ -367,7 +367,7 @@ module Aerospike
 
       seed_array.each do |seed|
         begin
-          seed_node_validator = NodeValidator.new(self, seed, @connection_timeout, @cluster_name)
+          seed_node_validator = NodeValidator.new(self, seed, @connection_timeout, @cluster_name, ssl_options)
         rescue => e
           Aerospike.logger.error("Seed #{seed.to_s} failed: #{e.backtrace.join("\n")}")
           next
@@ -381,7 +381,7 @@ module Aerospike
             nv = seed_node_validator
           else
             begin
-              nv = NodeValidator.new(self, aliass, @connection_timeout, @cluster_name)
+              nv = NodeValidator.new(self, aliass, @connection_timeout, @cluster_name, ssl_options)
             rescue => e
               Aerospike.logger.error("Seed #{seed.to_s} failed: #{e}")
               next
@@ -429,7 +429,7 @@ module Aerospike
 
       hosts.each do |host|
         begin
-          nv = NodeValidator.new(self, host, @connection_timeout, @cluster_name)
+          nv = NodeValidator.new(self, host, @connection_timeout, @cluster_name, ssl_options)
 
           # if node is already in cluster's node list,
           # or already included in the list to be added, we should skip it

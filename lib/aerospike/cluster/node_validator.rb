@@ -20,14 +20,15 @@ module Aerospike
 
   class NodeValidator # :nodoc:
 
-    attr_reader :host, :aliases, :name, :use_new_info, :features, :cluster_name
+    attr_reader :host, :aliases, :name, :use_new_info, :features, :cluster_name, :ssl_options
 
-    def initialize(cluster, host, timeout, cluster_name)
+    def initialize(cluster, host, timeout, cluster_name, ssl_options = {})
       @cluster = cluster
       @use_new_info = true
       @features = Set.new
       @host = host
       @cluster_name = cluster_name
+      @ssl_options = ssl_options
 
       set_aliases(host)
       set_address(timeout)
@@ -58,7 +59,7 @@ module Aerospike
     def set_address(timeout)
       @aliases.each do |aliass|
         begin
-          conn = Connection.new(aliass.name, aliass.port, timeout)
+          conn = Connection.new(aliass.name, aliass.port, timeout, ssl_options)
 
           # need to authenticate
           if @cluster.user && @cluster.user != ''
