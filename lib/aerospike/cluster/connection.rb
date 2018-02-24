@@ -33,12 +33,12 @@ module Aerospike
       end
 
       begin
-        socket.connect_nonblock
+        socket.connect!
       rescue IO::WaitWritable, Errno::EINPROGRESS
         # Block until the socket is ready, then try again
         IO.select(nil, [socket.socket], nil, timeout.to_f)
         begin
-          socket.connect_nonblock
+          socket.connect!
         rescue Errno::EISCONN
         rescue => e
           socket.close
@@ -52,7 +52,7 @@ module Aerospike
       total = 0
       while total < length
         begin
-          written = @socket.write_nonblock(buffer.read(total, length - total))
+          written = @socket.write(buffer.read(total, length - total))
           total += written
         rescue IO::WaitWritable, Errno::EAGAIN
           IO.select(nil, [@socket.socket])
@@ -67,7 +67,7 @@ module Aerospike
       total = 0
       while total < length
         begin
-          bytes = @socket.recv_nonblock(length - total)
+          bytes = @socket.read(length - total)
           if bytes.bytesize > 0
             buffer.write_binary(bytes, total)
           else
@@ -103,7 +103,7 @@ module Aerospike
         if IO.select([@socket.socket], [@socket.socket], [@socket.socket], timeout.to_f)
           begin
             # Verify there is now a good connection
-            @socket.connect_nonblock
+            @socket.connect!
           rescue Errno::EISCONN
             # operation successful
           rescue => e

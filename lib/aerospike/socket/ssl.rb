@@ -14,8 +14,8 @@ module Aerospike
         @ssl_socket.sync_close = true
       end
 
-      def connect_nonblock
-        @socket.connect_nonblock(::Socket.sockaddr_in(port, host))
+      def connect!
+        @socket.connect(::Socket.sockaddr_in(port, host))
         @ssl_socket.connect
         verify_certificate!(@ssl_socket)
         self
@@ -25,11 +25,11 @@ module Aerospike
         @ssl_socket.sysclose
       end
 
-      def recv_nonblock(maxlen)
+      def read(maxlen)
         @ssl_socket.sysread(maxlen)
       end
 
-      def write_nonblock(data)
+      def write(data)
         @ssl_socket.syswrite(data)
       end
 

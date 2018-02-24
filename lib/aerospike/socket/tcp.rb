@@ -10,7 +10,7 @@ module Aerospike
         @socket = ::Socket.new(::Socket::AF_INET, ::Socket::SOCK_STREAM, 0)
       end
 
-      def connect_nonblock
+      def connect!
         @socket.connect_nonblock(::Socket.sockaddr_in(port, host))
         self
       end
@@ -19,11 +19,11 @@ module Aerospike
         @socket.close
       end
 
-      def recv_nonblock(maxlen)
+      def read(maxlen)
         @socket.recv_nonblock(maxlen)
       end
 
-      def write_nonblock(data)
+      def write(data)
         @socket.write_nonblock(data)
       end
     end
