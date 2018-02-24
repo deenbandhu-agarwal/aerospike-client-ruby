@@ -40,6 +40,8 @@ module Aerospike
           set_cert(ctx, options)
           set_key(ctx, options)
           set_cert_verification(ctx, options)
+          set_cipher_suite(ctx, options)
+          set_protocols(ctx, options)
         end
       end
 
@@ -66,6 +68,18 @@ module Aerospike
           cert_store.set_default_paths
         end
         ctx.cert_store = cert_store
+      end
+
+      def set_cipher_suite(ctx, options)
+        if options[:cipher_suite]
+          # TODO(wallin)
+        end
+      end
+
+      def set_protocols(ctx, options)
+        if options[:protocols]
+          # TODO(wallin)
+        end
       end
 
       def verify_certificate!(socket)
