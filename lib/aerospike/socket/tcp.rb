@@ -6,14 +6,13 @@ module Aerospike
       attr_reader :socket, :host, :port, :timeout
 
       def initialize(host, port, timeout)
-        @host = host
-        @port = port
-        @timeout = timeout
+        @host, @port, @timeout = host, port, timeout
         @socket = ::Socket.new(::Socket::AF_INET, ::Socket::SOCK_STREAM, 0)
       end
 
       def connect_nonblock
         @socket.connect_nonblock(::Socket.sockaddr_in(port, host))
+        self
       end
 
       def close

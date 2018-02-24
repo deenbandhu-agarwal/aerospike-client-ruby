@@ -7,12 +7,10 @@ module Aerospike
       attr_reader :socket, :context, :host, :port
 
       def initialize(host, port, timeout, ssl_options)
-        @host = host
-        @port = port
-        @timeout = timeout
+        @host, @port, @timeout = host, port, timeout
         @socket = ::Socket.new(::Socket::AF_INET, ::Socket::SOCK_STREAM, 0)
         @context = create_context(ssl_options)
-        @ssl_socket = OpenSSL::SSL::SSLSocket.new(@socket, @context)
+        @ssl_socket = OpenSSL::SSL::SSLSocket.new(@socket, context)
         @ssl_socket.sync_close = true
       end
 
@@ -20,6 +18,7 @@ module Aerospike
         @socket.connect_nonblock(::Socket.sockaddr_in(port, host))
         @ssl_socket.connect
         verify_certificate!(@ssl_socket)
+        self
       end
 
       def close
@@ -74,6 +73,7 @@ module Aerospike
         return if OpenSSL::SSL.verify_certificate_identity(
           socket.peer_cert, host
         )
+        # TODO(wallin): raise correct error
         raise
       end
     end
