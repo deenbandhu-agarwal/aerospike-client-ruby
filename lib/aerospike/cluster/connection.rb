@@ -14,17 +14,15 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 
-require 'socket'
-
 module Aerospike
 
   private
 
   class Connection # :nodoc:
 
-    def initialize(host, port, timeout = 30)
+    def initialize(host, port, timeout = 30, ssl_options = {})
 
-      connect(host, port, timeout).tap do |socket|
+      connect(host, port, timeout, ssl_options).tap do |socket|
         @socket = socket
         @timeout = timeout
       end
@@ -32,17 +30,21 @@ module Aerospike
       self
     end
 
-    def connect(host, port, timeout)
-      socket = Socket.new(Socket::AF_INET, Socket::SOCK_STREAM, 0)
-      @sockaddr = Socket.sockaddr_in(port, host)
+    def connect(host, port, timeout, ssl_options = {})
+      socket = if ssl_options.any? && ssl_options[:enable] == true
+        ::Aerospike::Socket::SSL.new(host, port, timeout, ssl_options)
+      else
+        ::Aerospike::Socket::TCP.new(host, port, timeout)
+      end
+
       begin
-        socket.connect_nonblock(@sockaddr)
+        socket.connect_nonblock
         socket
       rescue IO::WaitWritable, Errno::EINPROGRESS
         # Block until the socket is ready, then try again
-        IO.select(nil, [socket], nil, timeout.to_f)
+        IO.select(nil, [socket.socket], nil, timeout.to_f)
         begin
-          socket.connect_nonblock(@sockaddr)
+          socket.connect_nonblock
         rescue Errno::EISCONN
         rescue => e
           socket.close
@@ -50,6 +52,9 @@ module Aerospike
         end
         socket
       end
+    rescue => e
+      puts e.inspect
+      raise
     end
 
     def write(buffer, length)
@@ -59,7 +64,7 @@ module Aerospike
           written = @socket.write_nonblock(buffer.read(total, length - total))
           total += written
         rescue IO::WaitWritable, Errno::EAGAIN
-          IO.select(nil, [@socket])
+          IO.select(nil, [@socket.socket])
           retry
         rescue => e
           raise Aerospike::Exceptions::Connection.new("#{e}")
@@ -80,7 +85,7 @@ module Aerospike
           end
           total += bytes.bytesize
         rescue IO::WaitReadable,  Errno::EAGAIN
-          IO.select([@socket], nil)
+          IO.select([@socket.socket], nil)
           retry
         rescue => e
           raise Aerospike::Exceptions::Connection.new("#{e}")
@@ -104,10 +109,10 @@ module Aerospike
     def timeout=(timeout)
       if timeout > 0 && timeout != @timeout
         @timeout = timeout
-        if IO.select([@socket], [@socket], [@socket], timeout.to_f)
+        if IO.select([@socket.socket], [@socket.socket], [@socket.socket], timeout.to_f)
           begin
             # Verify there is now a good connection
-            @socket.connect_nonblock(@sockaddr)
+            @socket.connect_nonblock
           rescue Errno::EISCONN
             # operation successful
           rescue => e

@@ -27,7 +27,7 @@ module Aerospike
   class Cluster
 
     attr_reader :connection_timeout, :connection_queue_size, :user, :password
-    attr_reader :features
+    attr_reader :features, :ssl_options
 
     def initialize(policy, *hosts)
       @cluster_seeds = hosts
@@ -39,6 +39,7 @@ module Aerospike
       @aliases = {}
       @cluster_nodes = []
       @partition_write_map = {}
+      @ssl_options = policy.ssl_options
       @node_index = Atomic.new(0)
       @features = Atomic.new(Set.new)
       @closed = Atomic.new(true)

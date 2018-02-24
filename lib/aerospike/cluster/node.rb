@@ -48,7 +48,7 @@ module Aerospike
 
       @connections = Pool.new(@cluster.connection_queue_size)
       @connections.create_block = Proc.new do
-        while conn = Connection.new(@host.name, @host.port, @cluster.connection_timeout)
+        while conn = Connection.new(@host.name, @host.port, @cluster.connection_timeout, @cluster.ssl_options)
 
           # need to authenticate
           if @cluster.user && @cluster.user != ''
