@@ -50,23 +50,23 @@ module Aerospike
 
     def write(buffer, length)
       total = 0
-      while total < length
-        begin
+      begin
+        while total < length
           written = @socket.write(buffer.read(total, length - total))
           total += written
-        rescue IO::WaitWritable, Errno::EAGAIN
-          IO.select(nil, [@socket.socket])
-          retry
-        rescue => e
-          raise Aerospike::Exceptions::Connection.new("#{e}")
         end
+      rescue IO::WaitWritable, Errno::EAGAIN
+        IO.select(nil, [@socket.socket])
+        retry
+      rescue => e
+        raise Aerospike::Exceptions::Connection.new("#{e}")
       end
     end
 
     def read(buffer, length)
       total = 0
-      while total < length
-        begin
+      begin
+        while total < length
           bytes = @socket.read(length - total)
           if bytes.bytesize > 0
             buffer.write_binary(bytes, total)
@@ -75,21 +75,21 @@ module Aerospike
             raise Aerospike::Exceptions::Aerospike.new(Aerospike::ResultCode::SERVER_NOT_AVAILABLE, "Connection to the server node is dead.")
           end
           total += bytes.bytesize
-        rescue IO::WaitReadable,  Errno::EAGAIN
-          IO.select([@socket.socket], nil)
-          retry
-        rescue => e
-          raise Aerospike::Exceptions::Connection.new("#{e}")
         end
+      rescue IO::WaitReadable,  Errno::EAGAIN
+        IO.select([@socket.socket], nil)
+        retry
+      rescue => e
+        raise Aerospike::Exceptions::Connection.new("#{e}")
       end
     end
 
     def connected?
-      @socket != nil
+      !@socket.nil?
     end
 
     def valid?
-      @socket != nil
+      !@socket.nil?
     end
 
     def close
@@ -114,7 +114,5 @@ module Aerospike
         end
       end
     end
-
   end
-
 end
