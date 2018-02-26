@@ -12,7 +12,6 @@ module Aerospike
         @context = create_context(ssl_options)
         @socket = OpenSSL::SSL::SSLSocket.new(@tcp_socket, context)
         @socket.sync_close = true
-        connect
       end
 
       def connect!

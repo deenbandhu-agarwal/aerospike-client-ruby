@@ -29,6 +29,8 @@ module Aerospike
         ::Aerospike::Socket::SSL.new(host, port, timeout, ssl_options)
       else
         ::Aerospike::Socket::TCP.new(host, port, timeout)
+      end.tap do |conn|
+        conn.connect
       end
     end
 
