@@ -2,29 +2,16 @@ require 'socket'
 
 module Aerospike
   module Socket
-    class TCP
-      attr_reader :socket, :host, :port, :timeout
-
+    class TCP < Connection
       def initialize(host, port, timeout)
         @host, @port, @timeout = host, port, timeout
-        @socket = ::Socket.new(::Socket::AF_INET, ::Socket::SOCK_STREAM, 0)
+        @socket = ::Socket.new(AF_INET, SOCK_STREAM, 0)
+        connect
       end
 
       def connect!
         @socket.connect_nonblock(::Socket.sockaddr_in(port, host))
         self
-      end
-
-      def close
-        @socket.close
-      end
-
-      def read(maxlen)
-        @socket.recv_nonblock(maxlen)
-      end
-
-      def write(data)
-        @socket.write_nonblock(data)
       end
     end
   end

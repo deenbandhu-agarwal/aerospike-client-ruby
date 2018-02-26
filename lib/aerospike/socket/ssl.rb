@@ -3,34 +3,23 @@ require 'openssl'
 
 module Aerospike
   module Socket
-    class SSL
-      attr_reader :socket, :context, :host, :port
+    class SSL < Connection
+      attr_reader :context
 
       def initialize(host, port, timeout, ssl_options)
         @host, @port, @timeout = host, port, timeout
-        @socket = ::Socket.new(::Socket::AF_INET, ::Socket::SOCK_STREAM, 0)
+        @tcp_socket = ::Socket.new(AF_INET, SOCK_STREAM, 0)
         @context = create_context(ssl_options)
-        @ssl_socket = OpenSSL::SSL::SSLSocket.new(@socket, context)
-        @ssl_socket.sync_close = true
+        @socket = OpenSSL::SSL::SSLSocket.new(@tcp_socket, context)
+        @socket.sync_close = true
+        connect
       end
 
       def connect!
-        @socket.connect(::Socket.sockaddr_in(port, host))
-        @ssl_socket.connect
-        verify_certificate!(@ssl_socket)
+        @tcp_socket.connect(::Socket.sockaddr_in(port, host))
+        @socket.connect
+        verify_certificate!(@socket)
         self
-      end
-
-      def close
-        @ssl_socket.sysclose
-      end
-
-      def read(maxlen)
-        @ssl_socket.sysread(maxlen)
-      end
-
-      def write(data)
-        @ssl_socket.syswrite(data)
       end
 
       private
