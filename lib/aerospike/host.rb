@@ -18,11 +18,10 @@ module Aerospike
 
   class Host
 
-    attr_accessor :name, :port
+    attr_accessor :name, :port, :tls_name
 
-    def initialize(host_name, host_port)
-      @name = host_name
-      @port = host_port
+    def initialize(host_name, host_port, tls_name = nil)
+      @name, @port, @tls_name = host_name, host_port, tls_name
     end
 
     def to_s
