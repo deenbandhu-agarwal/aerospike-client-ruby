@@ -1,16 +1,18 @@
+# frozen_string_literal: true
+
 require 'socket'
 
 module Aerospike
-  module Socket
-    class TCP < Connection
+  class Socket
+    class TCP < Socket
+      attr_reader :host, :port
       def initialize(host, port, timeout)
-        @host, @port, @timeout = host, port, timeout
-        @socket = ::Socket.new(AF_INET, SOCK_STREAM, 0)
+        @host, @port = host, port
+        super(AF_INET, timeout)
       end
 
       def connect!
         @socket.connect_nonblock(::Socket.sockaddr_in(port, host))
-        self
       end
     end
   end

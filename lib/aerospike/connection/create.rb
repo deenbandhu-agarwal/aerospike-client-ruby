@@ -1,5 +1,6 @@
-# encoding: utf-8
-# Copyright 2014 Aerospike, Inc.
+# frozen_string_literal: true
+
+# Copyright 2014-2017 Aerospike, Inc.
 #
 # Portions may be licensed to Aerospike, Inc. under one or more contributor
 # license agreements.
@@ -14,19 +15,20 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 
-require "spec_helper"
-require "benchmark"
-
-describe Aerospike::Info do
-
-  describe "#request" do
-    let(:host) { Support.client.nodes.first.get_host }
-
-    it "should connect and request info from the server" do
-      conn = Aerospike::Connection::Create.(host.name, host.port)
-      info = Aerospike::Info.request(conn)
-      expect(info).to include("version")
+module Aerospike
+  module Connection # :nodoc:
+    module Create
+      class << self
+        def call(host, port, timeout = 30, ssl_options = {})
+          if !ssl_options.nil? && ssl_options[:enable] == true
+            ::Aerospike::Socket::SSL.new(host, port, timeout, ssl_options)
+          else
+            ::Aerospike::Socket::TCP.new(host, port, timeout)
+          end.tap do |conn|
+            conn.connect
+          end
+        end
+      end
     end
   end
-
 end

@@ -79,7 +79,12 @@ require 'aerospike/policy/consistency_level'
 require 'aerospike/policy/commit_level'
 require 'aerospike/policy/admin_policy'
 
-require 'aerospike/cluster/connection'
+require 'aerospike/socket'
+require 'aerospike/socket/ssl'
+require 'aerospike/socket/tcp'
+
+require 'aerospike/connection/create'
+
 require 'aerospike/cluster/cluster'
 require 'aerospike/cluster/node_validator'
 require 'aerospike/cluster/partition'

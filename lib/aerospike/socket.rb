@@ -1,4 +1,5 @@
-# encoding: utf-8
+# frozen_string_literal: true
+
 # Copyright 2014-2017 Aerospike, Inc.
 #
 # Portions may be licensed to Aerospike, Inc. under one or more contributor
@@ -15,23 +16,15 @@
 # the License.
 
 module Aerospike
-
-  private
-
-  class Connection # :nodoc:
-
+  class Socket
     include ::Socket::Constants
 
-    attr_reader :socket, :host, :port, :timeout
+    attr_reader :socket, :timeout
 
-    def self.create(host, port, timeout = 30, ssl_options = {})
-      if !ssl_options.nil? && ssl_options[:enable] == true
-        ::Aerospike::Socket::SSL.new(host, port, timeout, ssl_options)
-      else
-        ::Aerospike::Socket::TCP.new(host, port, timeout)
-      end.tap do |conn|
-        conn.connect
-      end
+    def initialize(family, timeout)
+      @family, @timeout = family, timeout
+      @socket = ::Socket.new(family, SOCK_STREAM, 0)
+      # TODO: set_keepalive_opts(@socket)
     end
 
     def connect
@@ -48,6 +41,10 @@ module Aerospike
           raise e
         end
       end
+    end
+
+    def connect!
+      fail 'Not implemented'
     end
 
     def write(buffer, length)
@@ -97,6 +94,14 @@ module Aerospike
     def close
       @socket.close if @socket
       @socket = nil
+    end
+
+    def set_keepalive_opts(sock)
+      sock.setsockopt(SOL_SOCKET, SO_KEEPALIVE, true)
+      set_option(sock, :TCP_KEEPINTVL, DEFAULT_TCP_KEEPINTVL)
+      set_option(sock, :TCP_KEEPCNT, DEFAULT_TCP_KEEPCNT)
+      set_option(sock, :TCP_KEEPIDLE, DEFAULT_TCP_KEEPIDLE)
+    rescue
     end
 
     def timeout=(timeout)
