@@ -3,20 +3,30 @@
 module Aerospike
   class Cluster
     class Peer
+      # Parse the response from peers command
       module Parse
+        # Object representing the parsed response from peers command
         Object = ::Struct.new(:generation, :port_default, :peers)
+
         class << self
 
           BASE_REGEX = /(\d+),(\d*),\[(.*)\]/.freeze
 
           def call(response)
-            gen, port, peers = BASE_REGEX.match(response).to_a.last(3)
+            gen, port, peers = parse_base(response)
 
             ::Aerospike::Cluster::Peer::Parse::Object.new.tap do |obj|
               obj.generation = gen.to_i
               obj.port_default = port.empty? ? nil : port.to_i
               obj.peers = parse_peers(peers)
             end
+          end
+
+          def parse_base(response)
+           BASE_REGEX.match(response).to_a.last(3).tap do |parsed|
+            # Expect three pieces parsed from the Regex
+            raise ::Aerospike::Exceptions::Parse if parsed.size != 3
+           end
           end
 
           def parse_peers(response)

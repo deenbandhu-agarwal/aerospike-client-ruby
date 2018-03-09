@@ -25,5 +25,11 @@ RSpec.describe Aerospike::Cluster::Peer::Parse do
       it { expect(first_peer.tls_name).to eq 'aerospike' }
       it { expect(first_peer.hosts.size).to eq 1 }
     end
+
+    context 'with invalid response' do
+      let(:response) { ',,' }
+
+      it { expect { parsed }.to raise_error(::Aerospike::Exceptions::Parse) }
+    end
   end
 end
