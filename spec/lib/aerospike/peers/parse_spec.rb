@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-RSpec.describe Aerospike::Cluster::Peer::Parse do
+RSpec.describe Aerospike::Peers::Parse do
   describe "::call" do
     subject(:parsed) { described_class.call(response) }
     subject(:first_peer) { parsed.peers.first }

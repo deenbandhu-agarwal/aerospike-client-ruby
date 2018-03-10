@@ -19,7 +19,7 @@ module Aerospike
   module Connection # :nodoc:
     module Create
       class << self
-        def call(host, port, timeout = 30, tls_name = nil, ssl_options = {})
+        def call(host, port, timeout: 30, tls_name: nil, ssl_options: {})
           if !ssl_options.nil? && ssl_options[:enable] == true
             ::Aerospike::Socket::SSL.new(
               host, port, timeout, tls_name, ssl_options

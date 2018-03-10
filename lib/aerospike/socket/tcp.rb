@@ -5,7 +5,9 @@ require 'socket'
 module Aerospike
   class Socket
     class TCP < Socket
+
       attr_reader :host, :port
+
       def initialize(host, port, timeout)
         @host, @port = host, port
         super(AF_INET, timeout)

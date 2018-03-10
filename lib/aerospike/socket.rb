@@ -19,7 +19,7 @@ module Aerospike
   class Socket
     include ::Socket::Constants
 
-    attr_reader :socket, :timeout
+    attr_reader :socket, :timeout, :family
 
     def initialize(family, timeout)
       @family, @timeout = family, timeout

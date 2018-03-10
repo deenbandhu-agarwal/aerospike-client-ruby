@@ -1,4 +1,5 @@
-# encoding: utf-8
+# frozen_string_literal: true
+
 # Copyright 2014-2017 Aerospike, Inc.
 #
 # Portions may be licensed to Aerospike, Inc. under one or more contributor
@@ -21,15 +22,13 @@ require 'timeout'
 require 'aerospike/atomic/atomic'
 
 module Aerospike
-
-  private
-
   class Cluster
 
     attr_reader :connection_timeout, :connection_queue_size, :user, :password
     attr_reader :features, :ssl_options
+    attr_reader :cluster_id, :aliases
 
-    def initialize(policy, *hosts)
+    def initialize(policy, hosts)
       @cluster_seeds = hosts
       @fail_if_not_connected = policy.fail_if_not_connected
       @connection_queue_size = policy.connection_queue_size
@@ -54,7 +53,7 @@ module Aerospike
         @password = AdminCommand.hash_password(policy.password)
       end
 
-      self
+      set_default_tls_host_names(hosts) if tls_enabled?
     end
 
     def connect
@@ -67,8 +66,16 @@ module Aerospike
       launch_tend_thread
 
       Aerospike.logger.info('New cluster initialized and ready to be used...')
+    end
 
-      self
+    def tls_enabled?
+      (ssl_options || {}).key?(:enable)
+    end
+
+    def set_default_tls_host_names(hosts)
+      hosts.each do |host|
+        host.tls_name ||= cluster_id.nil? ? host.name : cluster_id
+      end
     end
 
     def add_seeds(hosts)
@@ -100,7 +107,7 @@ module Aerospike
         end
       end
 
-      return random_node
+      random_node
     end
 
     # Returns a random node on the cluster
@@ -230,69 +237,64 @@ module Aerospike
       end
     end
 
+    # Check health of all nodes in cluster
     def tend
       nodes = self.nodes
-      cluster_config_changed = false
-
-      # All node additions/deletions are performed in tend thread.
-      # If active nodes don't exist, seed cluster.
       if nodes.empty?
-        Aerospike.logger.info("No connections available; seeding...")
         seed_nodes
-        cluster_config_changed = true
-
-        # refresh nodes list after seeding
         nodes = self.nodes
       end
 
-      # Refresh all known nodes.
-      friend_list = []
-      refresh_count = 0
+      peers = Peers.new
 
-      # Clear node reference counts.
+      # Clear node reference count
       nodes.each do |node|
         node.reference_count.value = 0
-        node.responded.value = false
+        node.partition_changed.value = false
+        # Using peers is default true
+        peers.use_peers.value = false unless node.supports_feature?('peers')
+      end
 
-        if node.active?
-          begin
-            friends = node.refresh
-            refresh_count += 1
-            friend_list.concat(friends) if friends
-          rescue => e
-            Aerospike.logger.error("Node `#{node}` refresh failed: #{e}")
-            Aerospike.logger.error(e.backtrace.join("\n"))
-          end
+      # refresh all known nodes
+      nodes.each { |node| node.refresh(peers) }
+
+      # refresh peers when necessary
+      if peers.generation_changed?
+        # Refresh peers for all nodes that responded the first time even if only
+        # one node's peers changed.
+        nodes.each { |node| node.refresh_peers(peers) }
+      end
+
+      nodes.each { |node| node.refresh_partitions(peers) if node.partition_changed? }
+
+      if peers.generation_changed? || !peers.use_peers?
+        nodes_to_remove = find_nodes_to_remove(peers.refresh_count)
+        if nodes_to_remove.any?
+          remove_nodes(nodes_to_remove)
+          cluster_config_changed = true
         end
       end
 
-      # Add nodes in a batch.
-      add_list = find_nodes_to_add(friend_list)
-      unless add_list.empty?
-        add_nodes(add_list)
-        cluster_config_changed = true
-      end
-
-      # Handle nodes changes determined from refreshes.
-      # Remove nodes in a batch.
-      remove_list = find_nodes_to_remove(refresh_count)
-      unless remove_list.empty?
-        remove_nodes(remove_list)
+      # Add any new nodes from peer refresh
+      if peers.nodes.any?
+        add_nodes(peers.nodes)
         cluster_config_changed = true
       end
 
       if cluster_config_changed
         update_cluster_features
-
+        notify_cluster_config_changed
         # only log the tend finish IF the number of nodes has been changed.
         # This prevents spamming the log on every tend interval
-        diff = nodes.length - @old_node_count
-        action = "#{diff.abs} #{diff.abs == 1 ? "node has" : "nodes have"} #{diff > 0 ? "joined" : "left"} the cluster."
-        Aerospike.logger.info("Tend finished. #{action} Old node count: #{@old_node_count}, New node count: #{nodes.length}")
-        @old_node_count = nodes.length
-
-        notify_cluster_config_changed
+        log_tend_stats(nodes)
       end
+    end
+
+    def log_tend_stats(nodes)
+      diff = nodes.size - @old_node_count
+      action = "#{diff.abs} #{diff.abs == 1 ? "node has" : "nodes have"} #{diff > 0 ? "joined" : "left"} the cluster."
+      Aerospike.logger.info("Tend finished. #{action} Old node count: #{@old_node_count}, New node count: #{nodes.size}")
+      @old_node_count = nodes.size
     end
 
     def wait_till_stablized
@@ -387,7 +389,6 @@ module Aerospike
               next
             end
           end
-
           if !find_node_name(list, nv.name)
             node = create_node(nv)
             add_aliases(node)
@@ -400,7 +401,6 @@ module Aerospike
       if list.length > 0
         add_nodes_copy(list)
       end
-
     end
 
     # Finds a node by name in a list of nodes
@@ -461,7 +461,7 @@ module Aerospike
     end
 
     def create_node(nv)
-      Node.new(self, nv)
+      ::Aerospike::Node.new(self, nv)
     end
 
     def find_nodes_to_remove(refresh_count)
@@ -608,7 +608,5 @@ module Aerospike
     def find_node_by_name(node_name)
       nodes.detect{|node| node.name == node_name }
     end
-
   end
-
 end

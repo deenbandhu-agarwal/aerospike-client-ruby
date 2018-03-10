@@ -35,7 +35,7 @@ EOF
   end
 
   def self.client
-    @client ||= Aerospike::Client.new()
+    @client ||= Aerospike::Client.new
   end
 
   def self.feature?(feature)

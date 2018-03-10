@@ -11,7 +11,9 @@ describe Aerospike::Connection::Create do
     before do
       allow(::Aerospike::Socket::SSL).to receive(:new).and_return(socket)
       allow(::Aerospike::Socket::TCP).to receive(:new).and_return(socket)
-      described_class.call(host, port, timeout, tls_name, ssl_options)
+      described_class.call(
+        host, port, timeout: timeout, tls_name: tls_name, ssl_options: ssl_options
+      )
     end
 
     shared_examples_for 'a tcp socket' do

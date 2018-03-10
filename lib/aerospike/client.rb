@@ -49,7 +49,7 @@ module Aerospike
 
       hosts = ::Aerospike::Host::Parse.(hosts || ENV["AEROSPIKE_HOSTS"] || "localhost")
       policy = create_policy(policy, ClientPolicy)
-      @cluster = Cluster.new(policy, *hosts)
+      @cluster = Cluster.new(policy, hosts)
       @cluster.add_cluster_config_change_listener(self)
 
       self.connect if connect

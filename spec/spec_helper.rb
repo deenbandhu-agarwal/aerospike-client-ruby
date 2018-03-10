@@ -1,7 +1,5 @@
-# encoding: utf-8
-
 require 'rspec'
-require "support/utils"
+require 'support/utils'
 
 require 'simplecov'
 SimpleCov.start

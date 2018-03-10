@@ -1,4 +1,5 @@
-# encoding: utf-8
+# frozen_string_literal: true
+
 # Copyright 2014-2017 Aerospike, Inc.
 #
 # Portions may be licensed to Aerospike, Inc. under one or more contributor
@@ -15,9 +16,6 @@
 # the License.
 
 module Aerospike
-
-  private
-
   class NodeValidator # :nodoc:
 
     attr_reader :host, :aliases, :name, :use_new_info, :features, :cluster_name, :ssl_options
@@ -59,7 +57,12 @@ module Aerospike
     def set_address(timeout)
       @aliases.each do |aliass|
         begin
-          @conn = Connection::Create.(aliass.name, aliass.port, aliass.tls_name, timeout, ssl_options)
+          conn = Connection::Create.(
+            aliass.name, aliass.port,
+            timeout: timeout,
+            tls_name: aliass.tls_name,
+            ssl_options: ssl_options
+          )
 
           # need to authenticate
           if @cluster.user && @cluster.user != ''
@@ -89,9 +92,8 @@ module Aerospike
             end
           end
         ensure
-          conn.close if conn
+          conn.close if conn.valid?
         end
-
       end
     end
 
@@ -107,7 +109,5 @@ module Aerospike
 
       raise Aerospike::Exceptions::Parse.new("Invalid build version string in Info: #{version}")
     end
-
   end # class
-
 end #module

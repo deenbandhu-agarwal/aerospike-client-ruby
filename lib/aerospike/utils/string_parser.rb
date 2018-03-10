@@ -14,7 +14,7 @@ module Aerospike
 
       # Reads next character and raise if not matching desired one
       def expect(char)
-        raise unless @io.read(1) == char
+        raise ::Aerospike::Exceptions::Parse unless @io.read(1) == char
       end
 
       def read_until(char)
