@@ -20,6 +20,10 @@ require 'aerospike/atomic/atomic'
 module Aerospike
   class Node
 
+    INFO_CMDS_BASE = %w[node partition-generation cluster-name].freeze
+    INFO_CMDS_PEERS = (INFO_CMDS_BASE + ['peers-generation']).freeze
+    INFO_CMDS_SERVICES = (INFO_CMDS_BASE + ['services']).freeze
+
     attr_reader :reference_count, :responded, :name, :features, :cluster_name, :partition_changed, :peers_generation
 
     PARTITIONS = 4096
@@ -82,13 +86,11 @@ module Aerospike
     def refresh(peers)
       conn = get_connection(1)
       if peers.use_peers?
-        info_map = Info.request(conn, 'node', 'peers-generation', 'partition-generation')
-        verify_node_name(info_map)
+        info_map = Info.request(conn, *INFO_CMDS_PEERS)
         verify_peers_generation(info_map, peers)
         verify_partition_generation(info_map)
       else
-        info_map = Info.request(conn, 'node', 'partition-generation', 'services', 'cluster-name')
-        verify_node_name(info_map)
+        info_map = Info.request(conn, *INFO_CMDS_SERVICES)
         verify_partition_generation(info_map)
         add_friends(info_map, peers)
       end
@@ -100,21 +102,10 @@ module Aerospike
       peers.refresh_count += 1
       failures = 0
     rescue => e
-#      puts e.inspect
       conn.close if conn
       decrease_health
       peers.generation_changed == true if peers.use_peers?
       refresh_failed(e)
-    end
-
-    def verify_node_name(info_map)
-      info_name = info_map.fetch('node') do
-        fail ::Aerospike::Exceptions::Parse
-      end
-      if @name != info_name
-        @active.update {|_| false }
-        fail ::Aerospike::Exceptions::Aerospike
-      end
     end
 
     # Fetch and set peers generation. If peers needs to be refreshed this
@@ -147,9 +138,6 @@ module Aerospike
         @partition_changed.value = true
         @partition_generation.value = generation
       end
-    end
-
-    def add_friends(info_map, peers)
     end
 
     def prepare_friend(host, peers)
@@ -370,7 +358,7 @@ module Aerospike
       end
     end
 
-    def add_friends(info_map)
+    def add_friends(info_map, peers)
       friend_string = info_map['services']
 
       if friend_string.to_s.empty?
