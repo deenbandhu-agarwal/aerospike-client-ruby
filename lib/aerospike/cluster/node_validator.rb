@@ -59,7 +59,7 @@ module Aerospike
     def set_address(timeout)
       @aliases.each do |aliass|
         begin
-          conn = Connection::Create.(aliass.name, aliass.port, timeout, ssl_options)
+          @conn = Connection::Create.(aliass.name, aliass.port, aliass.tls_name, timeout, ssl_options)
 
           # need to authenticate
           if @cluster.user && @cluster.user != ''

@@ -4,13 +4,14 @@ describe Aerospike::Connection::Create do
   let(:host) { 'thehost' }
   let(:port) { 3000 }
   let(:socket) { spy }
+  let(:tls_name) { nil }
   let(:timeout) { 1 }
 
   describe '::call' do
     before do
       allow(::Aerospike::Socket::SSL).to receive(:new).and_return(socket)
       allow(::Aerospike::Socket::TCP).to receive(:new).and_return(socket)
-      described_class.call(host, port, timeout, ssl_options)
+      described_class.call(host, port, timeout, tls_name, ssl_options)
     end
 
     shared_examples_for 'a tcp socket' do
@@ -29,7 +30,7 @@ describe Aerospike::Connection::Create do
       it do
         expect(
           ::Aerospike::Socket::SSL
-        ).to have_received(:new).with(host, port, timeout, ssl_options)
+        ).to have_received(:new).with(host, port, timeout, tls_name, ssl_options)
       end
 
       it { expect(::Aerospike::Socket::TCP).not_to have_received(:new) }

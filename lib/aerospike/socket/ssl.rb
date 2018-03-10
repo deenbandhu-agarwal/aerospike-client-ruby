@@ -6,10 +6,10 @@ require 'openssl'
 module Aerospike
   class Socket
     class SSL < Socket
-      attr_reader :context, :host, :port
+      attr_reader :context, :host, :port, :tls_name, :tcp_socket
 
-      def initialize(host, port, timeout, ssl_options)
-        @host, @port, @timeout = host, port, timeout
+      def initialize(host, port, timeout, tls_name, ssl_options)
+        @host, @port, @timeout, @tls_name = host, port, timeout, tls_name
         # Use context from options if passed.
         ssl_options ||= {}
         @context = ssl_options[:context] || create_context(ssl_options)
@@ -75,10 +75,10 @@ module Aerospike
         # TODO(wallin)
       end
 
-      def verify_certificate!(socket)
+      def verify_certificate!(socket, tls_name)
         return unless context.verify_mode == ::OpenSSL::SSL::VERIFY_PEER
         return if ::OpenSSL::SSL.verify_certificate_identity(
-          socket.peer_cert, host
+          socket.peer_cert, tls_name
         )
         # TODO(wallin): raise correct error
         raise
