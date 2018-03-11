@@ -20,10 +20,6 @@ require 'aerospike/atomic/atomic'
 module Aerospike
   class Node
 
-    INFO_CMDS_BASE = %w[node partition-generation cluster-name].freeze
-    INFO_CMDS_PEERS = (INFO_CMDS_BASE + ['peers-generation']).freeze
-    INFO_CMDS_SERVICES = (INFO_CMDS_BASE + ['services']).freeze
-
     attr_reader :reference_count, :responded, :name, :features, :cluster_name, :partition_changed, :partition_generation, :peers_generation, :failures, :cluster
 
     PARTITIONS = 4096
