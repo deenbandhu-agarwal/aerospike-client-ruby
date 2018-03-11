@@ -29,7 +29,7 @@ module Aerospike
 
             peers.refresh_count += 1
             node.reset_failures!
-          rescue => e
+          rescue ::Aerospike::Exceptions::Aerospike => e
             conn.close if conn
             node.decrease_health
             peers.generation_changed = true if peers.use_peers?

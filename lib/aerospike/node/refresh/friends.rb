@@ -72,7 +72,7 @@ module Aerospike
             peers.hosts << host
             peers.nodes[nv.name] = node
             true
-          rescue => e
+          rescue ::Aerospike::Exceptions::Aerospike
             false
           end
         end

@@ -31,7 +31,8 @@ module Aerospike
                   peers.nodes[nv.name] = node
                   node_validated = true
                   break;
-                rescue => e
+                rescue ::Aerospike::Exceptions::Aerospike => e
+                  Aerospike.logger.warn("Add node #{host} failed: #{e.inspect}")
                 end
 
                 peers_validated = false
@@ -40,7 +41,7 @@ module Aerospike
 
             node.peers_generation.value = collection.generation if peers_validated
             peers.refresh_count += 1
-          rescue => e
+          rescue ::Aerospike::Exceptions::Aerospike => e
             Refresh::Failed.(node, e)
           end
         end

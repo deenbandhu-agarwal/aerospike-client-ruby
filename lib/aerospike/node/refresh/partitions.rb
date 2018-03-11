@@ -8,7 +8,7 @@ module Aerospike
           def call(node, e)
             conn = node.get_connection(1)
             node.cluster.update_partitions(conn, node)
-          rescue => e
+          rescue ::Aerospike::Exceptions::Aerospike => e
             conn.close if conn
             Refresh::Failed.(node, e)
           end
