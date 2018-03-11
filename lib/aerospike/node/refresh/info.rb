@@ -18,7 +18,7 @@ module Aerospike
             else
               info_map = ::Aerospike::Info.request(conn, *CMDS_SERVICES)
               Verify::PartitionGeneration.(node, info_map, peers)
-              node.add_friends(info_map, peers)
+              Refresh::Friends.(node, peers, info_map)
             end
 
             Verify::Name.(node, info_map)

@@ -20,7 +20,7 @@ require 'aerospike/atomic/atomic'
 module Aerospike
   class Node
 
-    attr_reader :reference_count, :responded, :name, :features, :cluster_name, :partition_changed, :partition_generation, :peers_generation, :failures, :cluster
+    attr_reader :reference_count, :responded, :name, :features, :cluster_name, :partition_changed, :partition_generation, :peers_generation, :failures, :cluster, :peers_count
 
     PARTITIONS = 4096
     FULL_HEALTH = 100
@@ -77,47 +77,6 @@ module Aerospike
       end
 
       @connections.cleanup_block = Proc.new { |conn| conn.close if conn }
-    end
-
-    def prepare_friend(host, peers)
-      # TODO validate
-      nv = NodeValidator.new(
-        @cluster, host, timeout,
-        @cluster.connection_timeout, @cluster.cluster_name, @cluster.ssl_options
-      )
-
-      node = peers.nodes[nv.name]
-
-      unless node.nil?
-        peers.hosts << host
-        node.aliases << host
-        return true
-      end
-
-      node = @cluster.nodes_map[nv.name]
-
-      unless node.nil?
-        peers.hosts << host
-        node.aliases << host
-        node.reference_count.update { |v| v + 1 }
-        cluster.aliases[host.to_s] = node
-        return true
-      end
-
-      node = ::Aerospike::Cluster::FindNode.(@cluster, peers, nv.name)
-      unless node.nil?
-        peers.hosts << host
-        node.aliases << host
-        @cluster.add_alias(host, node)
-        return true
-      end
-
-      node = @cluster.create_node(nv)
-      peers.hosts << host
-      peers.nodes[nv.name] = node
-      true
-    rescue => e
-      false
     end
 
     def partition_changed?
@@ -249,32 +208,6 @@ module Aerospike
     # Sets node aliases
     def set_aliases(aliases)
       @aliases.value = aliases
-    end
-
-    def add_friends(info_map, peers)
-      friend_string = info_map['services']
-
-      if friend_string.to_s.empty?
-        @peers_count.value = 0
-        return
-      end
-
-      friend_names = friend_string.split(';')
-      @peers_count.value = friend_names.size
-
-      friend_names.each do |friend|
-        hostname, port = friend.split(':')
-        host = Host.new(hostname, port.to_i)
-        node = @cluster.find_alias(host)
-
-        if node
-          node.reference_count.update { |v| v + 1 }
-        else
-          unless peers.hosts.any? {|h| h == host}
-            prepare_friend(host, peers)
-          end
-        end
-      end
     end
   end # class Node
 end # module

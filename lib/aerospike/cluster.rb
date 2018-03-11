@@ -252,7 +252,7 @@ module Aerospike
         node.reference_count.value = 0
         node.partition_changed.value = false
         # Using peers is default true
-        peers.use_peers.value = false unless node.supports_feature?('peers')
+        peers.use_peers = false unless node.supports_feature?('peers')
       end
 
       # refresh all known nodes
