@@ -64,7 +64,8 @@ module Aerospike
         end
 
         def parse_host(parser, peer)
-          # TODO: handle IPv6
+          # TODO(wallin): handle IPv6
+          raise ::Aerospike::Exceptions::Parse if parser.current == '['
           parser.read_until(']').split(',').map do |host|
             hostname, port = host.split(':')
             ::Aerospike::Host.new(hostname, port, peer.tls_name)

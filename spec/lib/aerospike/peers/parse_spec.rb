@@ -26,6 +26,12 @@ RSpec.describe Aerospike::Peers::Parse do
       it { expect(first_peer.hosts.size).to eq 1 }
     end
 
+    context 'with IPv6' do
+      let(:response) { '1,,[[name,tls,[[::1]]]]' }
+
+      it { expect { parsed }.to raise_error(::Aerospike::Exceptions::Parse) }
+    end
+
     context 'with invalid response' do
       let(:response) { ',,' }
 
