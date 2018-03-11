@@ -24,7 +24,7 @@ module Aerospike
     INFO_CMDS_PEERS = (INFO_CMDS_BASE + ['peers-generation']).freeze
     INFO_CMDS_SERVICES = (INFO_CMDS_BASE + ['services']).freeze
 
-    attr_reader :reference_count, :responded, :name, :features, :cluster_name, :partition_changed, :peers_generation
+    attr_reader :reference_count, :responded, :name, :features, :cluster_name, :partition_changed, :partition_generation, :peers_generation
 
     PARTITIONS = 4096
     FULL_HEALTH = 100
@@ -87,57 +87,28 @@ module Aerospike
       conn = get_connection(1)
       if peers.use_peers?
         info_map = Info.request(conn, *INFO_CMDS_PEERS)
-        verify_peers_generation(info_map, peers)
-        verify_partition_generation(info_map)
+        Verify::PeersGeneration.(self, info_map, peers)
+        Verify::PartitionGeneration.(self, info_map, peers)
       else
         info_map = Info.request(conn, *INFO_CMDS_SERVICES)
-        verify_partition_generation(info_map)
+        Verify::PartitionGeneration.(self, info_map, peers)
         add_friends(info_map, peers)
       end
 
-      verify_node_name_and_cluster_name(info_map)
+      Verify::Name.(self, info_map)
+      Verify::ClusterName.(self, info_map)
+
       restore_health
       @responded.update { |_| true }
 
       peers.refresh_count += 1
       failures = 0
-    rescue => e
+    rescue => e # TODO: don't rescue everything
+      puts e.inspect
       conn.close if conn
       decrease_health
       peers.generation_changed == true if peers.use_peers?
       refresh_failed(e)
-    end
-
-    # Fetch and set peers generation. If peers needs to be refreshed this
-    # will be indicated in @peers_changed
-    def verify_peers_generation(info_map, peers)
-      gen_string = info_map.fetch('peers-generation')
-
-      raise Aerospike::Exceptions::Parse.new('peers-generation is empty') if gen_string.to_s.empty?
-
-      generation = gen_string.to_i
-
-      if @peers_generation.value != generation
-        Aerospike.logger.info("Node #{get_name} peers generation #{generation} changed")
-        peers.generation_changed = true
-        @peers_generation.value = generation
-      end
-    end
-
-    # Fetch and set partition generation. If partitions needs to be refreshed this
-    # will be indicated in @partition_changed
-    def verify_partition_generation(info_map)
-      gen_string = info_map.fetch('partition-generation')
-
-      raise Aerospike::Exceptions::Parse.new('partition-generation is empty') if gen_string.to_s.empty?
-
-      generation = gen_string.to_i
-
-      if @partition_generation.value != generation
-        Aerospike.logger.info("Node #{get_name} partition generation #{generation} changed")
-        @partition_changed.value = true
-        @partition_generation.value = generation
-      end
     end
 
     def prepare_friend(host, peers)
@@ -270,6 +241,16 @@ module Aerospike
       @host
     end
 
+    # Sets node as active
+    def active!
+      @active.update { |_| true }
+    end
+
+    # Sets node as inactive
+    def inactive!
+      @active.update { |_| false }
+    end
+
     # Checks if the node is active
     def active?
       @active.value
@@ -336,26 +317,6 @@ module Aerospike
     # Sets node aliases
     def set_aliases(aliases)
       @aliases.value = aliases
-    end
-
-    def verify_node_name_and_cluster_name(info_map)
-      info_name = info_map['node']
-
-      if !info_name
-        decrease_health
-        raise Aerospike::Exceptions::Aerospike.new(Aerospike::ResultCode::INVALID_NODE_ERROR, "Node name is empty")
-      end
-
-      if !(@name == info_name)
-        # Set node to inactive immediately.
-        @active.update { |_| false }
-        raise Aerospike::Exceptions::Aerospike.new(Aerospike::ResultCode::INVALID_NODE_ERROR, "Node name has changed. Old=#{@name} New= #{info_name}")
-      end
-
-      if cluster_name && cluster_name != info_map['cluster-name']
-        @active.update { |_| false }
-        raise Aerospike::Exceptions::Aerospike.new(Aerospike::ResultCode::INVALID_NODE_ERROR, "Cluster name does not match. expected: #{cluster_name}, got: #{info_map['cluster-name']}")
-      end
     end
 
     def add_friends(info_map, peers)
