@@ -256,16 +256,16 @@ module Aerospike
       end
 
       # refresh all known nodes
-      nodes.each { |node| node.refresh(peers) }
+      nodes.each { |node| Node::Refresh::Info.(node, peers) }
 
       # refresh peers when necessary
       if peers.generation_changed?
         # Refresh peers for all nodes that responded the first time even if only
         # one node's peers changed.
-        nodes.each { |node| node.refresh_peers(peers) }
+        nodes.each { |node| Node::Refresh::Peers.(node, peers) }
       end
 
-      nodes.each { |node| node.refresh_partitions(peers) if node.partition_changed? }
+      nodes.each { |node| Node::Refresh::Partitions.(node, peers) if node.partition_changed? }
 
       if peers.generation_changed? || !peers.use_peers?
         nodes_to_remove = find_nodes_to_remove(peers.refresh_count)

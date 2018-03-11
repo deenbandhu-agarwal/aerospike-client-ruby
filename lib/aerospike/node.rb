@@ -24,7 +24,7 @@ module Aerospike
     INFO_CMDS_PEERS = (INFO_CMDS_BASE + ['peers-generation']).freeze
     INFO_CMDS_SERVICES = (INFO_CMDS_BASE + ['services']).freeze
 
-    attr_reader :reference_count, :responded, :name, :features, :cluster_name, :partition_changed, :partition_generation, :peers_generation
+    attr_reader :reference_count, :responded, :name, :features, :cluster_name, :partition_changed, :partition_generation, :peers_generation, :failures, :cluster
 
     PARTITIONS = 4096
     FULL_HEALTH = 100
@@ -50,7 +50,7 @@ module Aerospike
       @responded = Atomic.new(false)
       @active = Atomic.new(true)
       @partition_changed = Atomic.new(false)
-      @failures = 0
+      @failures = Atomic.new(0)
 
       @connections = Pool.new(@cluster.connection_queue_size)
 
@@ -81,33 +81,6 @@ module Aerospike
       end
 
       @connections.cleanup_block = Proc.new { |conn| conn.close if conn }
-    end
-
-    def refresh(peers)
-      conn = get_connection(1)
-      if peers.use_peers?
-        info_map = Info.request(conn, *INFO_CMDS_PEERS)
-        Verify::PeersGeneration.(self, info_map, peers)
-        Verify::PartitionGeneration.(self, info_map, peers)
-      else
-        info_map = Info.request(conn, *INFO_CMDS_SERVICES)
-        Verify::PartitionGeneration.(self, info_map, peers)
-        add_friends(info_map, peers)
-      end
-
-      Verify::Name.(self, info_map)
-      Verify::ClusterName.(self, info_map)
-
-      restore_health
-      @responded.update { |_| true }
-
-      peers.refresh_count += 1
-      failures = 0
-    rescue => e # TODO: don't rescue everything
-      conn.close if conn
-      decrease_health
-      peers.generation_changed == true if peers.use_peers?
-      refresh_failed(e)
     end
 
     def prepare_friend(host, peers)
@@ -141,58 +114,6 @@ module Aerospike
       true
     rescue => e
       false
-    end
-
-    def refresh_peers(peers)
-      return if @failures > 0 || !active?
-
-      collection = ::Aerospike::Peers::Fetch.(@cluster, get_connection(1))
-      peers.peers = collection.peers
-      peers_validated = true
-
-      peers.peers.each do |peer|
-        next if ::Aerospike::Cluster::FindNode.(@cluster, peers, peer.node_name)
-
-        node_validated = false
-
-        peer.hosts.each do |host|
-          begin
-            nv = NodeValidator.new(@cluster, @host, @cluster.connection_timeout, @cluster.ssl_options)
-
-            if nv.name != peer.node_name
-              # TODO:
-              # Must look for new node name in the unlikely event that node names do not agree.
-              break;
-            end
-
-            node = @cluster.create_node(nv)
-            peers.nodes[nv.name] = node
-            node_validated = true
-            break;
-          rescue => e
-          end
-
-          peers_validated = false
-        end
-      end
-
-      @peers_generation.value = collection.generation if peers_validated
-      peers.refresh_count += 1
-    rescue => e
-      refresh_failed(e)
-    end
-
-    def refresh_partitions(peers)
-      conn = get_connection(1)
-      @cluster.update_partitions(conn, self)
-    rescue => e
-      conn.close if conn
-      refresh_failed(e)
-    end
-
-    def refresh_failed(e)
-      Aerospike.logger.info("Node #{get_name} refresh failed #{e.inspect}")
-      @failures += 1
     end
 
     def partition_changed?
@@ -253,6 +174,10 @@ module Aerospike
     # Checks if the node is active
     def active?
       @active.value
+    end
+
+    def responded!
+      @responded.value = true
     end
 
     # Returns node name

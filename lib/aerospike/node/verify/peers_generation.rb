@@ -15,7 +15,6 @@ module Aerospike
             if node.peers_generation.value != generation
               Aerospike.logger.info("Node #{node.get_name} peers generation #{generation} changed")
               peers.generation_changed = true
-              #node.peers_generation.value = generation
             end
           end
         end
