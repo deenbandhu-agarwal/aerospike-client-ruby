@@ -14,7 +14,7 @@ module Aerospike
             else
               info_map = ::Aerospike::Info.request(conn, *INFO_CMDS_SERVICES)
               Verify::PartitionGeneration.(node, info_map, peers)
-              add_friends(info_map, peers)
+              node.add_friends(info_map, peers)
             end
 
             Verify::Name.(node, info_map)
@@ -24,7 +24,7 @@ module Aerospike
             node.responded!
 
             peers.refresh_count += 1
-            node.failures.value = 0
+            node.reset_failures!
           rescue => e
             conn.close if conn
             node.decrease_health

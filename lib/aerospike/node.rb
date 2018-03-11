@@ -180,6 +180,10 @@ module Aerospike
       @responded.value = true
     end
 
+    def reset_failures!
+      @failures.value = 0
+    end
+
     # Returns node name
     def get_name
       @name
