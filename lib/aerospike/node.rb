@@ -104,7 +104,6 @@ module Aerospike
       peers.refresh_count += 1
       failures = 0
     rescue => e # TODO: don't rescue everything
-      puts e.inspect
       conn.close if conn
       decrease_health
       peers.generation_changed == true if peers.use_peers?
