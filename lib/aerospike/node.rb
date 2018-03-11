@@ -204,10 +204,10 @@ module Aerospike
 
           peers_validated = false
         end
-
-        @peers_generation.value = collection.generation if peers_validated
-        peers.refresh_count += 1
       end
+
+      @peers_generation.value = collection.generation if peers_validated
+      peers.refresh_count += 1
     rescue => e
       refresh_failed(e)
     end
