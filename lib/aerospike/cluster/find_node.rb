@@ -6,7 +6,7 @@ module Aerospike
       class << self
         def call(cluster, peers, node_name)
           node = cluster.find_node_by_name(node_name) || peers.nodes[node_name]
-          return false if node.nil?
+          return if node.nil?
           node.tap do |n|
             n.reference_count.update { |v| v + 1 }
           end

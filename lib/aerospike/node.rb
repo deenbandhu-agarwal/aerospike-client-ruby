@@ -104,6 +104,14 @@ module Aerospike
         return true
       end
 
+      node = ::Aerospike::Cluster::FindNode.(@cluster, peers, nv.name)
+      unless node.nil?
+        peers.hosts << host
+        node.aliases << host
+        @cluster.add_alias(host, node)
+        return true
+      end
+
       node = @cluster.create_node(nv)
       peers.hosts << host
       peers.nodes[nv.name] = node
