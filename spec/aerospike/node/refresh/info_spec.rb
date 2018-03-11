@@ -11,7 +11,7 @@ RSpec.describe Aerospike::Node::Refresh::Info do
     allow(::Aerospike::Node::Verify::ClusterName).to receive(:call)
     allow(::Aerospike::Node::Verify::Name).to receive(:call)
     allow(::Aerospike::Node::Refresh::Failed).to receive(:call)
-    allow(node).to receive(:add_friends)
+    allow(::Aerospike::Node::Refresh::Friends).to receive(:call)
     allow(node).to receive(:decrease_health)
     allow(node).to receive(:restore_health)
     allow(node).to receive(:responded!)
@@ -30,7 +30,7 @@ RSpec.describe Aerospike::Node::Refresh::Info do
 
       it { expect(::Aerospike::Node::Verify::PeersGeneration).to have_received(:call) }
       it { expect(::Aerospike::Node::Verify::PartitionGeneration).to have_received(:call) }
-      it { expect(node).not_to have_received(:add_friends) }
+      it { expect(::Aerospike::Node::Refresh::Friends).not_to have_received(:call) }
       it { expect(node).to have_received(:reset_failures!) }
     end
 
@@ -41,13 +41,15 @@ RSpec.describe Aerospike::Node::Refresh::Info do
       end
 
       it { expect(::Aerospike::Node::Verify::PartitionGeneration).to have_received(:call) }
-      it { expect(node).to have_received(:add_friends) }
+      it { expect(::Aerospike::Node::Refresh::Friends).to have_received(:call) }
       it { expect(node).to have_received(:reset_failures!) }
     end
 
     context 'when node name verification fails' do
       before do
-        allow(::Aerospike::Node::Verify::Name).to receive(:call).and_raise("error")
+        allow(::Aerospike::Node::Verify::Name).to receive(:call).and_raise(
+          ::Aerospike::Exceptions::Aerospike.new(0, '')
+        )
         call!
       end
 
