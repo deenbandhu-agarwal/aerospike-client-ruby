@@ -17,7 +17,9 @@
 
 module Aerospike
   class NodeValidator # :nodoc:
-    attr_reader :host, :aliases, :name, :use_new_info, :features, :cluster_name, :ssl_options
+    VERSION_REGEXP = /(?<v1>\d+)\.(?<v2>\d+)\.(?<v3>\d+).*/.freeze
+
+    attr_reader :host, :aliases, :name, :use_new_info, :features, :cluster_name, :ssl_options, :conn
 
     def initialize(cluster, host, timeout, cluster_name, ssl_options = {})
       @cluster = cluster
@@ -34,19 +36,19 @@ module Aerospike
     def set_aliases(host)
       is_ip = !!((host =~ Resolv::IPv4::Regex) || (host =~ Resolv::IPv6::Regex))
 
-      if is_ip
-        # don't try to resolve IP addresses. May fail in different OS or network setups
-        addresses = host
-      else
-        addresses = Resolv.getaddresses(host.name)
-      end
+      addresses = if is_ip
+                    # Don't try to resolve IP addresses.
+                    # May fail in different OS or network setups
+                     host
+                  else
+                    Resolv.getaddresses(host.name)
+                  end
 
-      aliases = []
-      addresses.each do |addr|
-        aliases << Host.new(addr, host.port)
+      @aliases = [].tap do |aliases|
+        addresses.each do |addr|
+          aliases << Host.new(addr, host.port, host.tls_name)
+        end
       end
-
-      @aliases = aliases
 
       Aerospike.logger.debug("Node Validator has #{aliases.length} nodes.")
     end
@@ -90,11 +92,8 @@ module Aerospike
 
     protected
 
-    # parses a version string
-    @@version_regexp = /(?<v1>\d+)\.(?<v2>\d+)\.(?<v3>\d+).*/
-
     def parse_version_string(version)
-      if v = @@version_regexp.match(version)
+      if v = VERSION_REGEXP.match(version)
         return v['v1'], v['v2'], v['v3']
       end
 
