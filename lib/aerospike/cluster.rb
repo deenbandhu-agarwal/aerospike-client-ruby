@@ -66,6 +66,10 @@ module Aerospike
       Aerospike.logger.info('New cluster initialized and ready to be used...')
     end
 
+    def credentials_given?
+      !(@user.nil? || @user.empty?)
+    end
+
     def tls_enabled?
       (ssl_options || {}).key?(:enable)
     end
