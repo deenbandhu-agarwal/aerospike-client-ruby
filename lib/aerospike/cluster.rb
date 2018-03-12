@@ -16,14 +16,12 @@
 # the License.
 
 require 'set'
-require 'thread'
 require 'timeout'
 
 require 'aerospike/atomic/atomic'
 
 module Aerospike
   class Cluster
-
     attr_reader :connection_timeout, :connection_queue_size, :user, :password
     attr_reader :features, :ssl_options
     attr_reader :cluster_id, :aliases
@@ -53,14 +51,14 @@ module Aerospike
         @password = AdminCommand.hash_password(policy.password)
       end
 
-      set_default_tls_host_names(hosts) if tls_enabled?
+      initialize_tls_host_names(hosts) if tls_enabled?
     end
 
     def connect
       wait_till_stablized
 
       if @fail_if_not_connected && !connected?
-        raise Aerospike::Exceptions::Aerospike.new(Aerospike::ResultCode::SERVER_NOT_AVAILABLE)
+        raise Aerospike::Exceptions::Aerospike, Aerospike::ResultCode::SERVER_NOT_AVAILABLE
       end
 
       launch_tend_thread
@@ -72,7 +70,7 @@ module Aerospike
       (ssl_options || {}).key?(:enable)
     end
 
-    def set_default_tls_host_names(hosts)
+    def initialize_tls_host_names(hosts)
       hosts.each do |host|
         host.tls_name ||= cluster_id.nil? ? host.name : cluster_id
       end
@@ -102,9 +100,7 @@ module Aerospike
       if node_array = nmap[partition.namespace]
         node = node_array.value[partition.partition_id]
 
-        if node && node.active?
-          return node
-        end
+        return node if node && node.active?
       end
 
       random_node
@@ -118,16 +114,14 @@ module Aerospike
       i = 0
       while i < length
         # Must handle concurrency with other non-tending threads, so node_index is consistent.
-        index = (@node_index.update{|v| v+1} % node_array.length).abs
+        index = (@node_index.update{ |v| v+1 } % node_array.length).abs
         node = node_array[index]
 
-        if node.active?
-          return node
-        end
+        return node if node.active?
 
         i = i.succ
       end
-      raise Aerospike::Exceptions::InvalidNode.new
+      raise Aerospike::Exceptions::InvalidNode
     end
 
     # Returns a list of all nodes in the cluster
@@ -142,23 +136,19 @@ module Aerospike
     def get_node_by_name(node_name)
       node = find_node_by_name(node_name)
 
-      raise Aerospike::Exceptions::InvalidNode.new unless node
+      raise Aerospike::Exceptions::InvalidNode unless node
 
       node
     end
 
     # Closes all cached connections to the cluster nodes and stops the tend thread
     def close
-      unless @closed.value
-        # send close signal to maintenance channel
-        @closed.value = true
-        @tend_thread.kill
+      return if @closed.value
+      # send close signal to maintenance channel
+      @closed.value = true
+      @tend_thread.kill
 
-        nodes.each do |node|
-          node.close
-        end
-      end
-
+      nodes.each(&:close)
     end
 
     def find_alias(aliass)
@@ -170,22 +160,21 @@ module Aerospike
     def update_partitions(conn, node)
       # TODO: Cluster should not care about version of tokenizer
       # decouple clstr interface
-      nmap = {}
-      if node.use_new_info?
-        Aerospike.logger.info("Updating partitions using new protocol...")
+      nmap = if node.use_new_info?
+        Aerospike.logger.info('Updating partitions using new protocol...')
 
         tokens = PartitionTokenizerNew.new(conn)
-        nmap = tokens.update_partition(partitions, node)
+        tokens.update_partition(partitions, node)
       else
-        Aerospike.logger.info("Updating partitions using old protocol...")
+        Aerospike.logger.info('Updating partitions using old protocol...')
         tokens = PartitionTokenizerOld.new(conn)
-        nmap = tokens.update_partition(partitions, node)
+        tokens.update_partition(partitions, node)
       end
 
       # update partition write map
       set_partitions(nmap) if nmap
 
-      Aerospike.logger.info("Partitions updated...")
+      Aerospike.logger.info('Partitions updated...')
     end
 
     def request_info(policy, *commands)
@@ -201,8 +190,8 @@ module Aerospike
     end
 
     def change_password(user, password)
-     # change password ONLY if the user is the same
-     @password = password if @user == user
+      # change password ONLY if the user is the same
+      @password = password if @user == user
     end
 
     def add_cluster_config_change_listener(listener)
@@ -226,7 +215,7 @@ module Aerospike
     def launch_tend_thread
       @tend_thread = Thread.new do
         Thread.current.abort_on_exception = false
-        while true
+        loop do
           begin
             tend
             sleep(@tend_interval / 1000.0)
@@ -249,7 +238,7 @@ module Aerospike
 
       # Clear node reference count
       nodes.each do |node|
-        node.reference_count.value = 0
+        node.reset_reference_count!
         node.partition_changed.value = false
         # Using peers is default true
         peers.use_peers = false unless node.supports_feature?('peers')
@@ -281,13 +270,13 @@ module Aerospike
         cluster_config_changed = true
       end
 
-      if cluster_config_changed
-        update_cluster_features
-        notify_cluster_config_changed
-        # only log the tend finish IF the number of nodes has been changed.
-        # This prevents spamming the log on every tend interval
-        log_tend_stats(nodes)
-      end
+      return unless cluster_config_changed
+
+      update_cluster_features
+      notify_cluster_config_changed
+      # only log the tend finish IF the number of nodes has been changed.
+      # This prevents spamming the log on every tend interval
+      log_tend_stats(nodes)
     end
 
     def log_tend_stats(nodes)
@@ -302,14 +291,12 @@ module Aerospike
 
       # will run until the cluster is stablized
       thr = Thread.new do
-        while true
+        loop do
           tend
 
           # Check to see if cluster has changed since the last Tend.
           # If not, assume cluster has stabilized and return.
-          if count == nodes.length
-            break
-          end
+          break if count == nodes.length
 
           sleep(0.001) # sleep for a miliseconds
 
@@ -327,13 +314,12 @@ module Aerospike
       end
 
       @closed.value = false if @cluster_nodes.length > 0
-
     end
 
     def update_cluster_features
       # Cluster supports features that are supported by all nodes
       @features.update do
-        node_features = self.nodes.map(&:features)
+        node_features = nodes.map(&:features)
         node_features.reduce(&:intersection) || Set.new
       end
     end
@@ -378,7 +364,6 @@ module Aerospike
         nv = nil
         # Seed host may have multiple aliases in the case of round-robin dns configurations.
         seed_node_validator.aliases.each do |aliass|
-
           if aliass == seed
             nv = seed_node_validator
           else
@@ -389,23 +374,20 @@ module Aerospike
               next
             end
           end
-          if !find_node_name(list, nv.name)
-            node = create_node(nv)
-            add_aliases(node)
-            list << node
-          end
+          next if find_node_name(list, nv.name)
+
+          node = create_node(nv)
+          add_aliases(node)
+          list << node
         end
-
       end
 
-      if list.length > 0
-        add_nodes_copy(list)
-      end
+      add_nodes_copy(list) if list.length > 0
     end
 
     # Finds a node by name in a list of nodes
     def find_node_name(list, name)
-      list.any?{|node| node.name == name}
+      list.any? { |node| node.name == name }
     end
 
     def add_alias(host, node)
@@ -442,7 +424,7 @@ module Aerospike
             # services list contains both internal and external IP addresses
             # for the same node.  Add new host to list of alias filters
             # and do not add new node.
-            node.reference_count.update{|v| v + 1}
+            node.increase_reference_count!
             node.add_alias(host)
             add_alias(host, node)
             next
@@ -495,7 +477,7 @@ module Aerospike
             # Check if node responded to info request.
             if node.responded.value
               # Node is alive, but not referenced by other nodes.  Check if mapped.
-              if !find_node_in_partition_map(node)
+              unless find_node_in_partition_map(node)
                 # Node doesn't have any partitions mapped to it.
                 # There is not point in keeping it in the cluster.
                 remove_list << node

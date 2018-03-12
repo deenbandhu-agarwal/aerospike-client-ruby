@@ -5,7 +5,6 @@ require 'socket'
 module Aerospike
   module Socket
     class TCP < ::Socket
-
       include Base
 
       def self.connect(host, port, timeout)

@@ -139,6 +139,14 @@ module Aerospike
       @active.value
     end
 
+    def increase_reference_count!
+      @reference_count.update { |v| v + 1 }
+    end
+
+    def reset_reference_count!
+      @reference_count.value = 0
+    end
+
     def responded!
       @responded.value = true
     end

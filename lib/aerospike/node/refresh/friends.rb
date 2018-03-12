@@ -23,7 +23,7 @@ module Aerospike
               node = node.cluster.find_alias(host)
 
               if node
-                node.reference_count.update { |v| v + 1 }
+                node.increase_reference_count!
               else
                 unless peers.hosts.any? {|h| h == host}
                   prepare(node, peers, host)
@@ -55,7 +55,7 @@ module Aerospike
             unless node.nil?
               peers.hosts << host
               node.aliases << host
-              node.reference_count.update { |v| v + 1 }
+              node.increase_reference_count!
               cluster.aliases[host.to_s] = node
               return true
             end

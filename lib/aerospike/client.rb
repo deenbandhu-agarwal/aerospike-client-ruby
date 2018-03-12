@@ -46,8 +46,7 @@ module Aerospike
       @default_query_policy = QueryPolicy.new
       @default_admin_policy = QueryPolicy.new
 
-
-      hosts = ::Aerospike::Host::Parse.(hosts || ENV["AEROSPIKE_HOSTS"] || "localhost")
+      hosts = ::Aerospike::Host::Parse.(hosts || ENV['AEROSPIKE_HOSTS'] || 'localhost')
       policy = create_policy(policy, ClientPolicy)
       @cluster = Cluster.new(policy, hosts)
       @cluster.add_cluster_config_change_listener(self)

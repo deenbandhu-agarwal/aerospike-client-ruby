@@ -5,7 +5,6 @@ require 'openssl'
 module Aerospike
   module Socket
     class SSL < ::OpenSSL::SSL::SSLSocket
-
       include Base
 
       def self.connect(host, port, timeout, tls_name, ssl_options)

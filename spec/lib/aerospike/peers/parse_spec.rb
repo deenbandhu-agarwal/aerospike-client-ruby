@@ -3,7 +3,8 @@
 RSpec.describe Aerospike::Peers::Parse do
   describe "::call" do
     subject(:parsed) { described_class.call(response) }
-    subject(:first_peer) { parsed.peers.first }
+
+    let(:first_peer) { parsed.peers.first }
 
     context 'when empty response' do
       let(:response) { '1,,[]' }
