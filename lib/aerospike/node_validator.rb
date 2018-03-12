@@ -63,14 +63,8 @@ module Aerospike
 
           # need to authenticate
           if @cluster.user && @cluster.user != ''
-            begin
-              command = AdminCommand.new
-              command.authenticate(conn, @cluster.user, @cluster.password)
-            rescue => e
-              # Socket not authenticated. Do not put back into pool.
-              conn.close if conn
-              raise e
-            end
+            # Authenticate will raise and close connection if invalid credendials
+            Connection::Authenticate.(conn, @cluster.user, @cluster.password)
           end
 
           info_map = Info.request(conn, 'node', 'build', 'features')
