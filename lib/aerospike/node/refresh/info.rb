@@ -10,7 +10,7 @@ module Aerospike
 
         class << self
           def call(node, peers)
-            conn = node.get_connection(1)
+            conn = node.tend_connection
             if peers.use_peers?
               info_map = ::Aerospike::Info.request(conn, *CMDS_PEERS)
               Verify::PeersGeneration.(node, info_map, peers)

@@ -6,7 +6,7 @@ module Aerospike
       class << self
         def call(conn, user, password)
           command = AdminCommand.new
-          command.authenticate(conn, @cluster.user, @cluster.password)
+          command.authenticate(conn, user, password)
           true
         rescue ::Aerospike::Exceptions::Aerospike
           conn.close if conn

@@ -8,7 +8,7 @@ module Aerospike
           def call(node, peers)
             return if node.failures.value > 0 || !node.active?
 
-            collection = ::Aerospike::Peers::Fetch.(node.cluster, node.get_connection(1))
+            collection = ::Aerospike::Peers::Fetch.(node.cluster, node.tend_connection)
             peers.peers = collection.peers
             peers_validated = true
 

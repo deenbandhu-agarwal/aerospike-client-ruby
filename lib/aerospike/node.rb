@@ -35,6 +35,9 @@ module Aerospike
       @features = nv.features
       @cluster_name = nv.cluster_name
 
+      # TODO: Re-use connection from node validator
+      @tend_connection = nil
+
       # Assign host to first IP alias because the server identifies nodes
       # by IP address (not hostname).
       @host = nv.aliases[0]
@@ -89,6 +92,16 @@ module Aerospike
     def put_connection(conn)
       conn.close if !@active.value
       @connections.offer(conn)
+    end
+
+    # Separate connection for refreshing
+    def tend_connection
+      if @tend_connection.nil? || @tend_connection.closed?
+        @tend_connection = CreateConnection.(self).tap do |conn|
+          Connection::Authenticate.(conn, @cluster.user, @cluster.password) if @cluster.user
+        end
+      end
+      @tend_connection
     end
 
     # Mark the node as healthy
@@ -199,6 +212,7 @@ module Aerospike
     private
 
     def close_connections
+      @tend_connection.close if @tend_connection
       # drain connections and close all of them
       # non-blocking, does not call create_block when passed false
       while conn = @connections.poll(false)

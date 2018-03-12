@@ -6,7 +6,7 @@ module Aerospike
       module Partitions
         class << self
           def call(node, e)
-            conn = node.get_connection(1)
+            conn = node.tend_connection
             node.cluster.update_partitions(conn, node)
           rescue ::Aerospike::Exceptions::Aerospike => e
             conn.close if conn

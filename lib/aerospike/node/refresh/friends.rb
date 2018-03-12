@@ -36,7 +36,6 @@ module Aerospike
             nv = NodeValidator.new(
               node.cluster,
               host,
-              node.timeout,
               node.cluster.connection_timeout,
               node.cluster.cluster_name,
               node.cluster.ssl_options

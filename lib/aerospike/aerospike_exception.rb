@@ -28,8 +28,6 @@ module Aerospike
         @result_code = result_code
         message ||= ResultCode.message(result_code)
         super(message)
-
-        self
       end
 
     end
@@ -50,6 +48,8 @@ module Aerospike
       end
 
     end
+
+    InvalidCredentials = ::Class.new(Aerospike)
 
     class Serialize < Aerospike
 
