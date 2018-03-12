@@ -22,9 +22,10 @@ module Aerospike
                   nv = NodeValidator.new(node.cluster, node.host, node.cluster.connection_timeout, node.cluster.ssl_options)
 
                   if nv.name != peer.node_name
-                    # TODO:
+                    ::Aerospike.logger.warn("Peer node #{peer.node_name} is different than actual node #{nv.name} for host #{host}");
                     # Must look for new node name in the unlikely event that node names do not agree.
-                    break;
+                    # Node already exists. Do not even try to connect to hosts.
+                    break if Cluster::FindNode.(node.cluster, peers, nv.name)
                   end
 
                   node = node.cluster.create_node(nv)
