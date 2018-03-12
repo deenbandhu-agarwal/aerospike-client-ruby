@@ -7,7 +7,7 @@ RSpec.describe Aerospike::Host::Parse do
     let(:default_port) { 3000 }
     let(:first_item) { parsed.first }
 
-    context 'with single tls name' do
+    context 'with "192.168.1.10:cert1:3000"' do
       let(:str) { '192.168.1.10:cert1:3000' }
 
       it { expect(parsed.size).to eq 1 }
@@ -16,7 +16,7 @@ RSpec.describe Aerospike::Host::Parse do
       it { expect(first_item.port).to eq 3000 }
     end
 
-    context 'with two names' do
+    context 'with "host1:3000,host2:3000"' do
       let(:str) { 'host1:3000,host2:3000' }
 
       it { expect(parsed.size).to eq 2 }

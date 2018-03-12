@@ -21,13 +21,11 @@ module Aerospike
       class << self
         def call(host, port, timeout: 30, tls_name: nil, ssl_options: {})
           if !ssl_options.nil? && ssl_options[:enable] == true
-            ::Aerospike::Socket::SSL.new(
+            ::Aerospike::Socket::SSL.connect(
               host, port, timeout, tls_name, ssl_options
             )
           else
-            ::Aerospike::Socket::TCP.new(host, port, timeout)
-          end.tap do |conn|
-            conn.connect
+            ::Aerospike::Socket::TCP.connect(host, port, timeout)
           end
         end
       end

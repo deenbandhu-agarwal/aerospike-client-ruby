@@ -79,7 +79,7 @@ require 'aerospike/policy/consistency_level'
 require 'aerospike/policy/commit_level'
 require 'aerospike/policy/admin_policy'
 
-require 'aerospike/socket'
+require 'aerospike/socket/base'
 require 'aerospike/socket/ssl'
 require 'aerospike/socket/tcp'
 

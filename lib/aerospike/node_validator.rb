@@ -92,7 +92,7 @@ module Aerospike
             end
           end
         ensure
-          conn.close if conn.valid?
+          conn.close if conn
         end
       end
     end

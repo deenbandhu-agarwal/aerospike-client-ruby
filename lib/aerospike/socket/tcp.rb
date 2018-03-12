@@ -3,18 +3,29 @@
 require 'socket'
 
 module Aerospike
-  class Socket
-    class TCP < Socket
+  module Socket
+    class TCP < ::Socket
 
-      attr_reader :host, :port
+      include Base
 
-      def initialize(host, port, timeout)
-        @host, @port = host, port
-        super(AF_INET, timeout)
-      end
+      def self.connect(host, port, timeout)
+        sock = new(::Socket::AF_INET, ::Socket::SOCK_STREAM, 0)
+        sockaddr = ::Socket.sockaddr_in(port, host)
 
-      def connect!
-        @socket.connect_nonblock(::Socket.sockaddr_in(port, host))
+        begin
+          sock.connect_nonblock(sockaddr)
+        rescue IO::WaitWritable, Errno::EINPROGRESS
+          ::IO.select(nil, [sock], nil, timeout)
+
+          begin
+            sock.connect_nonblock(sockaddr)
+          rescue Errno::EISCONN
+          rescue => e
+            raise e
+          end
+        end
+
+        sock
       end
     end
   end
