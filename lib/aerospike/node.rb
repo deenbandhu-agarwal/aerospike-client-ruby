@@ -52,12 +52,7 @@ module Aerospike
 
       # TODO: put in separate methods
       @connections.create_block = Proc.new do
-        while conn = Connection::Create.(
-            @host.name, @host.port,
-            tls_name: @host.tls_name,
-            timeout: @cluster.connection_timeout,
-            ssl_options: @cluster.ssl_options
-          )
+        while conn = CreateConnection.(self)
 
           # need to authenticate
           if @cluster.user && @cluster.user != ''
