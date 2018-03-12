@@ -151,6 +151,10 @@ module Aerospike
       @responded.value = true
     end
 
+    def responded?
+      @responded.value == true
+    end
+
     def reset_failures!
       @failures.value = 0
     end

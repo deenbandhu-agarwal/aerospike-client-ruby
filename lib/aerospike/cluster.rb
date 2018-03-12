@@ -463,7 +463,7 @@ module Aerospike
 
         when 2
           # Two node clusters require at least one successful refresh before removing.
-          if refresh_count == 2 && node.reference_count.value == 0 && !node.responded.value
+          if refresh_count == 2 && node.reference_count.value == 0 && !node.responded?
             # Node is not referenced nor did it respond.
             remove_list << node
           end
@@ -473,7 +473,7 @@ module Aerospike
           if refresh_count >= 2 && node.reference_count.value == 0
             # Node is not referenced by other nodes.
             # Check if node responded to info request.
-            if node.responded.value
+            if node.responded?
               # Node is alive, but not referenced by other nodes.  Check if mapped.
               unless find_node_in_partition_map(node)
                 # Node doesn't have any partitions mapped to it.
