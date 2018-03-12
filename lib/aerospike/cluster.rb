@@ -210,8 +210,6 @@ module Aerospike
       "#<Aerospike::Cluster @cluster_nodes=#{@cluster_nodes}>"
     end
 
-    private
-
     def launch_tend_thread
       @tend_thread = Thread.new do
         Thread.current.abort_on_exception = false
