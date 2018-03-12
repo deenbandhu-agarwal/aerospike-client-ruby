@@ -7,7 +7,7 @@ module Aerospike
       # this will be indicated in node.partition_changed
       module PartitionGeneration
         class << self
-          def call(node, info_map, peers)
+          def call(node, info_map)
             gen_string = info_map.fetch('partition-generation')
 
             raise Aerospike::Exceptions::Parse.new('partition-generation is empty') if gen_string.to_s.empty?

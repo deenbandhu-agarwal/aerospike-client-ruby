@@ -357,7 +357,7 @@ module Aerospike
         begin
           seed_node_validator = NodeValidator.new(self, seed, @connection_timeout, @cluster_name, ssl_options)
         rescue => e
-          Aerospike.logger.error("Seed #{seed.to_s} failed: #{e.backtrace.join("\n")}")
+          Aerospike.logger.error("Seed #{seed} failed: #{e.backtrace.join("\n")}")
           next
         end
 
@@ -370,7 +370,7 @@ module Aerospike
             begin
               nv = NodeValidator.new(self, aliass, @connection_timeout, @cluster_name, ssl_options)
             rescue => e
-              Aerospike.logger.error("Seed #{seed.to_s} failed: #{e}")
+              Aerospike.logger.error("Seed #{seed} failed: #{e}")
               next
             end
           end

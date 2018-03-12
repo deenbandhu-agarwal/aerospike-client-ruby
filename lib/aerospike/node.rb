@@ -86,7 +86,7 @@ module Aerospike
     # Get a connection to the node. If no cached connection is not available,
     # a new connection will be created
     def get_connection(timeout)
-      while true
+      loop do
         conn = @connections.poll
         if conn.connected?
           conn.timeout = timeout.to_f
@@ -111,7 +111,7 @@ module Aerospike
 
     # Decrease node Health as a result of bad connection or communication
     def decrease_health
-      @health.update {|v| v -= 1 }
+      @health.update { |v| v - 1 }
     end
 
     # Check if the node is unhealthy

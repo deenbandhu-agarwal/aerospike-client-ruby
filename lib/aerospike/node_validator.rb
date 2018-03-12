@@ -17,7 +17,6 @@
 
 module Aerospike
   class NodeValidator # :nodoc:
-
     attr_reader :host, :aliases, :name, :use_new_info, :features, :cluster_name, :ssl_options
 
     def initialize(cluster, host, timeout, cluster_name, ssl_options = {})
@@ -30,8 +29,6 @@ module Aerospike
 
       set_aliases(host)
       set_address(timeout)
-
-      self
     end
 
     def set_aliases(host)

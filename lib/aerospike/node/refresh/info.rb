@@ -14,10 +14,10 @@ module Aerospike
             if peers.use_peers?
               info_map = ::Aerospike::Info.request(conn, *CMDS_PEERS)
               Verify::PeersGeneration.(node, info_map, peers)
-              Verify::PartitionGeneration.(node, info_map, peers)
+              Verify::PartitionGeneration.(node, info_map)
             else
               info_map = ::Aerospike::Info.request(conn, *CMDS_SERVICES)
-              Verify::PartitionGeneration.(node, info_map, peers)
+              Verify::PartitionGeneration.(node, info_map)
               Refresh::Friends.(node, peers, info_map)
             end
 
