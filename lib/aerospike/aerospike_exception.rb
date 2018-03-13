@@ -17,11 +17,8 @@
 require 'aerospike/result_code'
 
 module Aerospike
-
   module Exceptions
-
     class Aerospike < StandardError
-
       attr_reader :result_code
 
       def initialize(result_code, message = nil)
@@ -29,11 +26,9 @@ module Aerospike
         message ||= ResultCode.message(result_code)
         super(message)
       end
-
     end
 
     class Timeout < Aerospike
-
       attr_reader :timeout, :iterations, :failed_nodes, :failed_connections
 
       def initialize(timeout, iterations, failed_nodes=nil, failed_connections=nil)
@@ -44,19 +39,19 @@ module Aerospike
         @failed_connections = failed_connections
 
         super(ResultCode::TIMEOUT)
-
       end
-
     end
 
-    InvalidCredentials = ::Class.new(Aerospike)
+    class InvalidCredentials < Aerospike
+      def initialize(msg = nil)
+        super(ResultCode::NOT_AUTHENTICATED, msg)
+      end
+    end
 
     class Serialize < Aerospike
-
       def initialize(msg=nil)
         super(ResultCode::SERIALIZE_ERROR, msg)
       end
-
     end
 
     class Parse < Aerospike
@@ -64,48 +59,36 @@ module Aerospike
       def initialize(msg=nil)
         super(ResultCode::PARSE_ERROR, msg)
       end
-
     end
 
     class Connection < Aerospike
-
       def initialize(msg=nil)
         super(ResultCode::SERVER_NOT_AVAILABLE, msg)
       end
-
     end
 
     class InvalidNode < Aerospike
-
       def initialize(msg=nil)
         super(ResultCode::INVALID_NODE_ERROR, msg)
       end
-
     end
 
     class ScanTerminated < Aerospike
-
       def initialize(msg=nil)
         super(ResultCode::SCAN_TERMINATED, msg)
       end
-
     end
 
     class QueryTerminated < Aerospike
-
       def initialize(msg=nil)
         super(ResultCode::QUERY_TERMINATED, msg)
       end
-
     end
 
     class CommandRejected < Aerospike
-
       def initialize(msg=nil)
         super(ResultCode::COMMAND_REJECTED, msg)
       end
-
     end
-
   end
 end
