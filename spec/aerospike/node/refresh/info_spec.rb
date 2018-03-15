@@ -12,6 +12,7 @@ RSpec.describe Aerospike::Node::Refresh::Info do
     allow(::Aerospike::Node::Verify::Name).to receive(:call)
     allow(::Aerospike::Node::Refresh::Failed).to receive(:call)
     allow(::Aerospike::Node::Refresh::Friends).to receive(:call)
+    allow(node).to receive(:tend_connection).and_return(connection)
     allow(node).to receive(:decrease_health)
     allow(node).to receive(:restore_health)
     allow(node).to receive(:responded!)
