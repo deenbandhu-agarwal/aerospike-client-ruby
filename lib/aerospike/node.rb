@@ -58,8 +58,8 @@ module Aerospike
         while conn = CreateConnection.(self)
 
           # need to authenticate
-          if @cluster.credendials_given?
-            # Authenticate will raise and close connection if invalid credendials
+          if @cluster.credentials_given?
+            # Authenticate will raise and close connection if invalid credentials
             Connection::Authenticate.(conn, @cluster.user, @cluster.password)
           end
 
@@ -98,7 +98,7 @@ module Aerospike
     def tend_connection
       if @tend_connection.nil? || @tend_connection.closed?
         @tend_connection = CreateConnection.(self).tap do |conn|
-          if @cluster.credendials_given?
+          if @cluster.credentials_given?
             Connection::Authenticate.(conn, @cluster.user, @cluster.password)
           end
         end
