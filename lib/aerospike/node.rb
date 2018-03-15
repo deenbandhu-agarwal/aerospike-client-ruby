@@ -159,6 +159,14 @@ module Aerospike
       @responded.value == true
     end
 
+    def has_peers?
+      @peers_count.value > 0
+    end
+
+    def failed?
+      @failures.value > 0
+    end
+
     def reset_failures!
       @failures.value = 0
     end
