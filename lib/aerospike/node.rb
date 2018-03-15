@@ -90,7 +90,7 @@ module Aerospike
     # Put back a connection to the cache. If cache is full, the connection will be
     # closed and discarded
     def put_connection(conn)
-      conn.close if !@active.value
+      conn.close if !active?
       @connections.offer(conn)
     end
 
