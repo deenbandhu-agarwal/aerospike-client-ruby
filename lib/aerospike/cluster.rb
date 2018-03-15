@@ -233,6 +233,7 @@ module Aerospike
       nodes = self.nodes
       if nodes.empty?
         seed_nodes
+        cluster_config_changed = true
         nodes = self.nodes
       end
 
