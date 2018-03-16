@@ -7,6 +7,8 @@ module Aerospike
     class SSL < ::OpenSSL::SSL::SSLSocket
       include Base
 
+      SSL_PARAMS = [:ca_file, :ca_path]
+
       def self.connect(host, port, timeout, tls_name, ssl_options)
         Aerospike.logger.debug("Connecting to #{host}:#{tls_name}:#{port} using SSL options #{ssl_options}")
         tcp_sock = TCP.connect(host, port, timeout)
@@ -26,9 +28,16 @@ module Aerospike
             if ssl_options[:cert_file] && ssl_options[:pkey_file]
               cert = OpenSSL::X509::Certificate.new(File.read(ssl_options[:cert_file]))
               pkey = OpenSSL::PKey.read(File.read(ssl_options[:pkey_file]), ssl_options[:pkey_pass])
-              ctx.add_certificate(cert, pkey)
+              if ctx.respond_to?(:add_certificate)
+                ctx.add_certificate(cert, pkey)
+              else
+                ctx.cert = cert
+                ctx.key = pkey
+              end
             end
-            ctx.set_params(ssl_options.slice(:ca_file, :ca_path))
+
+            params = ssl_options.select { |key| SSL_PARAMS.include?(key) }
+            ctx.set_params(params)
           end
       end
     end
