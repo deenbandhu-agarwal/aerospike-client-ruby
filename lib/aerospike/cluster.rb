@@ -25,6 +25,7 @@ module Aerospike
     attr_reader :connection_timeout, :connection_queue_size, :user, :password
     attr_reader :features, :ssl_options
     attr_reader :cluster_id, :aliases
+    attr_reader :cluster_name
 
     def initialize(policy, hosts)
       @cluster_seeds = hosts
@@ -71,7 +72,7 @@ module Aerospike
     end
 
     def tls_enabled?
-      (ssl_options || {}).key?(:enable)
+      !ssl_options.nil? && ssl_options[:enable] != false
     end
 
     def initialize_tls_host_names(hosts)
@@ -360,7 +361,7 @@ module Aerospike
         begin
           seed_node_validator = NodeValidator.new(self, seed, @connection_timeout, @cluster_name, ssl_options)
         rescue => e
-          Aerospike.logger.error("Seed #{seed} failed: #{e.backtrace.join("\n")}")
+          Aerospike.logger.error("Seed #{seed} failed: #{e}\n#{e.backtrace.join("\n")}")
           next
         end
 

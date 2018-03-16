@@ -20,7 +20,7 @@ module Aerospike
     module Create
       class << self
         def call(host, port, timeout: 30, tls_name: nil, ssl_options: {})
-          if !ssl_options.nil? && ssl_options[:enable] == true
+          if !ssl_options.nil? && ssl_options[:enable] != false
             ::Aerospike::Socket::SSL.connect(
               host, port, timeout, tls_name, ssl_options
             )
