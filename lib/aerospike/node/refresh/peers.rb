@@ -19,7 +19,7 @@ module Aerospike
 
               peer.hosts.each do |host|
                 begin
-                  nv = NodeValidator.new(node.cluster, node.host, node.cluster.connection_timeout, node.cluster.ssl_options)
+                  nv = NodeValidator.new(node.cluster, node.host, node.cluster.connection_timeout, node.cluster.cluster_name, node.cluster.ssl_options)
 
                   if nv.name != peer.node_name
                     ::Aerospike.logger.warn("Peer node #{peer.node_name} is different than actual node #{nv.name} for host #{host}");
