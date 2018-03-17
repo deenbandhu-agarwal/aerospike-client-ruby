@@ -16,7 +16,7 @@ module Aerospike
           when String
             hosts.split(?,).map { |host|
               addr, tls_name, port = host.split(?:)
-              if port.nil? && tls_name.match?(INTEGER_REGEX)
+              if port.nil? && tls_name && tls_name.match?(INTEGER_REGEX)
                 port = tls_name
                 tls_name = nil
               end

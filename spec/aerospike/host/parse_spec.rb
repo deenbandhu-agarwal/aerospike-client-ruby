@@ -33,5 +33,14 @@ RSpec.describe Aerospike::Host::Parse do
       it { expect(first_item.tls_name).to eq 'tls_name' }
       it { expect(first_item.port).to eq 3000 }
     end
+
+    context 'with "host1"' do
+      let(:str) { 'host1' }
+
+      it { expect(parsed.size).to eq 1 }
+      it { expect(first_item.name).to eq 'host1' }
+      it { expect(first_item.tls_name).to be_nil }
+      it { expect(first_item.port).to eq 3000 }
+    end
   end
 end
