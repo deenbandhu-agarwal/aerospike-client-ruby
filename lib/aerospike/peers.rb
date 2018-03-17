@@ -12,6 +12,10 @@ module Aerospike
       @refresh_count = 0
     end
 
+    def find_node_by_name(node_name)
+      @nodes[node_name]
+    end
+
     def generation_changed?
       @generation_changed == true
     end
