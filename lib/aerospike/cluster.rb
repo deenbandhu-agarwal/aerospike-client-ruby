@@ -163,20 +163,8 @@ module Aerospike
       end
     end
 
-    def update_partitions(conn, node)
-      # TODO: Cluster should not care about version of tokenizer
-      # decouple clstr interface
-      nmap = if node.use_new_info?
-        Aerospike.logger.info('Updating partitions using new protocol...')
-
-        tokens = PartitionTokenizerNew.new(conn)
-        tokens.update_partition(partitions, node)
-      else
-        Aerospike.logger.info('Updating partitions using old protocol...')
-        tokens = PartitionTokenizerOld.new(conn)
-        tokens.update_partition(partitions, node)
-      end
-
+    def update_partitions(tokens, node)
+      nmap = tokens.update_partition(partitions, node)
       # update partition write map
       set_partitions(nmap) if nmap
 
