@@ -49,7 +49,7 @@ module Aerospike
               return true
             end
 
-            node = node.cluster.nodes_map[nv.name]
+            node = Cluster::FindNode.(cluster, peers, nv.name)
 
             unless node.nil?
               peers.hosts << host
