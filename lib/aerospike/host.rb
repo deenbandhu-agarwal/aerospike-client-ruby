@@ -21,7 +21,9 @@ module Aerospike
     attr_accessor :name, :port, :tls_name
 
     def initialize(host_name, host_port, tls_name = nil)
-      @name, @port, @tls_name = host_name, host_port, tls_name
+      @name = host_name
+      @port = host_port
+      @tls_name = tls_name
     end
 
     def to_s
