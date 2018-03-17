@@ -6,7 +6,7 @@ module Aerospike
       module Peers
         class << self
           def call(node, peers)
-            return if node.failures.value > 0 || !node.active?
+            return unless should_refresh?(node)
 
             collection = ::Aerospike::Peers::Fetch.(node.cluster, node.tend_connection)
             peers.peers = collection.peers
@@ -25,7 +25,10 @@ module Aerospike
                     ::Aerospike.logger.warn("Peer node #{peer.node_name} is different than actual node #{nv.name} for host #{host}");
                     # Must look for new node name in the unlikely event that node names do not agree.
                     # Node already exists. Do not even try to connect to hosts.
-                    break if Cluster::FindNode.(node.cluster, peers, nv.name)
+                    if Cluster::FindNode.(node.cluster, peers, nv.name)
+                      node_validated = true
+                      break;
+                    end
                   end
 
                   node = node.cluster.create_node(nv)
@@ -44,6 +47,10 @@ module Aerospike
             peers.refresh_count += 1
           rescue ::Aerospike::Exceptions::Aerospike => e
             Refresh::Failed.(node, e)
+          end
+
+          def should_refresh?(node)
+            node.failures.value == 0 && node.active?
           end
         end
       end
