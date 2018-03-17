@@ -246,7 +246,7 @@ module Aerospike
       # Clear node reference count
       nodes.each do |node|
         node.reset_reference_count!
-        node.partition_changed.value = false
+        node.partition_generation.reset_changed!
         # Using peers is default true
         peers.use_peers = false unless node.supports_feature?('peers')
       end
@@ -261,7 +261,9 @@ module Aerospike
         nodes.each { |node| Node::Refresh::Peers.(node, peers) }
       end
 
-      nodes.each { |node| Node::Refresh::Partitions.(node, peers) if node.partition_changed? }
+      nodes.each do |node|
+        Node::Refresh::Partitions.(node, peers) if node.partition_generation.changed?
+      end
 
       if peers.generation_changed? || !peers.use_peers?
         nodes_to_remove = find_nodes_to_remove(peers.refresh_count)

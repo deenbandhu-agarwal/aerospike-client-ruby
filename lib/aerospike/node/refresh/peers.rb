@@ -40,7 +40,7 @@ module Aerospike
               end
             end
 
-            node.peers_generation.value = collection.generation if peers_validated
+            node.peers_generation.update(collection.generation) if peers_validated
             peers.refresh_count += 1
           rescue ::Aerospike::Exceptions::Aerospike => e
             Refresh::Failed.(node, e)

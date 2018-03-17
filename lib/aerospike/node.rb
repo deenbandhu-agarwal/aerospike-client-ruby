@@ -20,7 +20,7 @@ require 'aerospike/atomic/atomic'
 module Aerospike
   class Node
 
-    attr_reader :reference_count, :responded, :name, :features, :cluster_name, :partition_changed, :partition_generation, :peers_generation, :failures, :cluster, :peers_count, :host
+    attr_reader :reference_count, :responded, :name, :features, :cluster_name, :partition_generation, :peers_generation, :failures, :cluster, :peers_count, :host
 
     PARTITIONS = 4096
     FULL_HEALTH = 100
@@ -43,12 +43,11 @@ module Aerospike
       @host = nv.aliases[0]
       @health = Atomic.new(FULL_HEALTH)
       @peers_count = Atomic.new(0)
-      @peers_generation = Atomic.new(-1)
-      @partition_generation = Atomic.new(-1)
+      @peers_generation = ::Aerospike::Node::Generation.new
+      @partition_generation = ::Aerospike::Node::Generation.new
       @reference_count = Atomic.new(0)
       @responded = Atomic.new(false)
       @active = Atomic.new(true)
-      @partition_changed = Atomic.new(false)
       @failures = Atomic.new(0)
 
       @connections = Pool.new(@cluster.connection_queue_size)
@@ -69,10 +68,6 @@ module Aerospike
       end
 
       @connections.cleanup_block = Proc.new { |conn| conn.close if conn }
-    end
-
-    def partition_changed?
-      @partition_changed.value == true
     end
 
     # Get a connection to the node. If no cached connection is not available,

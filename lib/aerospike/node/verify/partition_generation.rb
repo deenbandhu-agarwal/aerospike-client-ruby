@@ -14,11 +14,10 @@ module Aerospike
 
             generation = gen_string.to_i
 
-            if node.partition_generation.value != generation
-              Aerospike.logger.info("Node #{node.get_name} partition generation #{generation} changed")
-              node.partition_changed.value = true
-              node.partition_generation.value = generation
-            end
+            node.partition_generation.update(generation)
+
+            return unless node.partition_generation.changed?
+            Aerospike.logger.info("Node #{node.get_name} partition generation #{generation} changed")
           end
         end
       end
