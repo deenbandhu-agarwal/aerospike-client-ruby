@@ -3,6 +3,8 @@
 module Aerospike
   class Host
     module Parse
+      INTEGER_REGEX = /\A\d+\z/
+
       class << self
         # Parse hosts from string format: hostname1[:tlsname1][:port1],...
         def call(hosts, default_port = 3000)
@@ -13,8 +15,8 @@ module Aerospike
             hosts
           when String
             hosts.split(?,).map { |host|
-              (addr, tls_name, port) = host.split(?:)
-              if port.nil?
+              addr, tls_name, port = host.split(?:)
+              if port.nil? && tls_name.match?(INTEGER_REGEX)
                 port = tls_name
                 tls_name = nil
               end
