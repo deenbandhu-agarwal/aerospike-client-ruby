@@ -25,7 +25,7 @@ module Aerospike
               if node
                 node.increase_reference_count!
               else
-                unless peers.hosts.any? {|h| h == host}
+                unless peers.hosts.include?(host)
                   prepare(node, peers, host)
                 end
               end
