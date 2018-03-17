@@ -52,18 +52,7 @@ module Aerospike
     def set_address(timeout)
       @aliases.each do |aliass|
         begin
-          conn = Connection::Create.(
-            aliass.name, aliass.port,
-            timeout: timeout,
-            tls_name: aliass.tls_name,
-            ssl_options: ssl_options
-          )
-
-          # need to authenticate
-          if @cluster.user && @cluster.user != ''
-            # Authenticate will raise and close connection if invalid credendials
-            Connection::Authenticate.(conn, @cluster.user, @cluster.password)
-          end
+          conn = Cluster::CreateConnection.(@cluster, @host)
 
           info_map = Info.request(conn, 'node', 'build', 'features')
           if node_name = info_map['node']
