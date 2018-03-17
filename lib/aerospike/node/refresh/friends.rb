@@ -26,19 +26,19 @@ module Aerospike
                 node.increase_reference_count!
               else
                 unless peers.hosts.include?(host)
-                  prepare(node, peers, host)
+                  prepare(node.cluster, peers, host)
                 end
               end
             end
           end
 
-          def prepare(node, peers, host)
+          def prepare(cluster, peers, host)
             nv = NodeValidator.new(
-              node.cluster,
+              cluster,
               host,
-              node.cluster.connection_timeout,
-              node.cluster.cluster_name,
-              node.cluster.ssl_options
+              cluster.connection_timeout,
+              cluster.cluster_name,
+              cluster.ssl_options
             )
 
             node = peers.nodes[nv.name]
@@ -59,15 +59,15 @@ module Aerospike
               return true
             end
 
-            node = ::Aerospike::Cluster::FindNode.(node.cluster, peers, nv.name)
+            node = ::Aerospike::Cluster::FindNode.(cluster, peers, nv.name)
             unless node.nil?
               peers.hosts << host
               node.aliases << host
-              node.cluster.add_alias(host, node)
+              cluster.add_alias(host, node)
               return true
             end
 
-            node = node.cluster.create_node(nv)
+            node = cluster.create_node(nv)
             peers.hosts << host
             peers.nodes[nv.name] = node
             true
