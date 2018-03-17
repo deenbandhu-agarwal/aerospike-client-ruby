@@ -34,10 +34,11 @@ module Aerospike
       @connection_timeout = policy.timeout
       @tend_interval = policy.tend_interval
       @cluster_name = policy.cluster_name
+      @ssl_options = policy.ssl_options
+
       @aliases = {}
       @cluster_nodes = []
       @partition_write_map = {}
-      @ssl_options = policy.ssl_options
       @node_index = Atomic.new(0)
       @features = Atomic.new(Set.new)
       @closed = Atomic.new(true)
