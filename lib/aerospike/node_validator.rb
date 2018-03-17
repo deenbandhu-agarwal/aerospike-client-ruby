@@ -42,13 +42,9 @@ module Aerospike
                      host
                   else
                     Resolv.getaddresses(host.name)
-                  end
-
-      @aliases = [].tap do |aliases|
-        addresses.each do |addr|
-          aliases << Host.new(addr, host.port, host.tls_name)
-        end
       end
+
+      @aliases = addresses.map { |addr| Host.new(addr, host.port, host.tls_name) }
 
       Aerospike.logger.debug("Node Validator has #{aliases.length} nodes.")
     end
