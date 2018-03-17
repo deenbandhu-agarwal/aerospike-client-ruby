@@ -252,13 +252,17 @@ module Aerospike
       end
 
       # refresh all known nodes
-      nodes.each { |node| Node::Refresh::Info.(node, peers) }
+      nodes.each do |node|
+        Node::Refresh::Info.(node, peers)
+      end
 
       # refresh peers when necessary
       if peers.generation_changed?
         # Refresh peers for all nodes that responded the first time even if only
         # one node's peers changed.
-        nodes.each { |node| Node::Refresh::Peers.(node, peers) }
+        nodes.each do |node|
+          Node::Refresh::Peers.(node, peers)
+        end
       end
 
       nodes.each do |node|
