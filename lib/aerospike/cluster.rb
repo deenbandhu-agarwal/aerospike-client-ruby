@@ -232,6 +232,8 @@ module Aerospike
 
     # Check health of all nodes in cluster
     def tend
+      cluster_config_changed = false
+
       nodes = self.nodes
       if nodes.empty?
         seed_nodes
