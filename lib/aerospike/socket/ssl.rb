@@ -7,7 +7,7 @@ module Aerospike
     class SSL < ::OpenSSL::SSL::SSLSocket
       include Base
 
-      SSL_PARAMS = [:ca_file, :ca_path]
+      SSL_PARAMS = %i[ca_file ca_path].freeze
 
       def self.connect(host, port, timeout, tls_name, ssl_options)
         Aerospike.logger.debug("Connecting to #{host}:#{tls_name}:#{port} using SSL options #{ssl_options}")

@@ -24,9 +24,7 @@ describe Aerospike::Connection::Create do
       it { expect(::Aerospike::Socket::SSL).not_to have_received(:connect) }
     end
 
-    context 'when ssl options indicates enabled' do
-      let(:ssl_options) { { enable: true } }
-
+    shared_examples_for 'a ssl socket' do
       it do
         expect(
           ::Aerospike::Socket::SSL
@@ -34,6 +32,12 @@ describe Aerospike::Connection::Create do
       end
 
       it { expect(::Aerospike::Socket::TCP).not_to have_received(:connect) }
+    end
+
+    context 'when ssl options indicates enabled' do
+      let(:ssl_options) { { enable: true } }
+
+      it_behaves_like 'a ssl socket'
     end
 
     context 'when ssl options are nil' do
@@ -45,7 +49,7 @@ describe Aerospike::Connection::Create do
     context 'when ssl options are empty' do
       let(:ssl_options) { {} }
 
-      it_behaves_like 'a tcp socket'
+      it_behaves_like 'a ssl socket'
     end
   end
 end
