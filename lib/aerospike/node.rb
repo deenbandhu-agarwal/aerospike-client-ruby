@@ -54,7 +54,7 @@ module Aerospike
 
       # TODO: put in separate methods
       @connections.create_block = Proc.new do
-        while conn = CreateConnection.(self)
+        while conn = Cluster::CreateConnection.(cluster, host)
 
           # need to authenticate
           if @cluster.credentials_given?
@@ -92,7 +92,7 @@ module Aerospike
     # Separate connection for refreshing
     def tend_connection
       if @tend_connection.nil? || @tend_connection.closed?
-        @tend_connection = CreateConnection.(self).tap do |conn|
+        @tend_connection = Cluster::CreateConnection.(cluster, host).tap do |conn|
           if @cluster.credentials_given?
             Connection::Authenticate.(conn, @cluster.user, @cluster.password)
           end
