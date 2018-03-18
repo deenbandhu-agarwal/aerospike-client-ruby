@@ -268,7 +268,8 @@ module Aerospike
 
       # Add any new nodes from peer refresh
       if peers.nodes.any?
-        add_nodes(peers.nodes)
+        # peers.nodes is a Hash. Pass only values, ie. the array of nodes
+        add_nodes(peers.nodes.values)
         cluster_config_changed = true
       end
 
