@@ -12,9 +12,7 @@ module Aerospike
 
             generation = gen_string.to_i
 
-            node.peers_generation.update(generation)
-
-            return unless node.peers_generation.changed?
+            return if node.peers_generation.eql?(generation)
 
             Aerospike.logger.info("Node #{node.get_name} peers generation #{generation} changed")
             peers.generation_changed = true

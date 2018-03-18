@@ -43,6 +43,8 @@ module Aerospike
               end
             end
 
+            # Only set new peers generation if all referenced peers are added to
+            # the cluster.
             node.peers_generation.update(collection.generation) if peers_validated
             peers.refresh_count += 1
           rescue ::Aerospike::Exceptions::Aerospike => e

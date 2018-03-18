@@ -15,6 +15,10 @@ module Aerospike
         @changed.value == true
       end
 
+      def eql?(number)
+        @number.value == number
+      end
+
       def reset_changed!
         @changed.value = false
       end
