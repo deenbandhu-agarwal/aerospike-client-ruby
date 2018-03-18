@@ -38,5 +38,14 @@ RSpec.describe Aerospike::Peers::Parse do
 
       it { expect { parsed }.to raise_error(::Aerospike::Exceptions::Parse) }
     end
+
+    context 'with multiple hosts' do
+      let(:response) { '2,3100,[[C1DA60C88270008,,[192.168.50.4,10.0.2.15]]]' }
+
+      it { expect(first_peer.hosts.size).to eq 2 }
+      it { expect(parsed.port_default).to eq 3100 }
+      it { expect(first_peer.hosts.first.port).to eq 3100 }
+
+    end
   end
 end

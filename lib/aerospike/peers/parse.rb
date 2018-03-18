@@ -17,7 +17,7 @@ module Aerospike
           ::Aerospike::Peers::Parse::Object.new.tap do |obj|
             obj.generation = gen.to_i
             obj.port_default = port.empty? ? nil : port.to_i
-            obj.peers = parse_peers(peers)
+            obj.peers = parse_peers(peers, obj)
           end
         end
 
@@ -28,24 +28,28 @@ module Aerospike
          end
         end
 
-        def parse_peers(response)
+        def parse_peers(response, obj)
           return [] if response.empty?
           parser = ::Aerospike::Utils::StringParser.new(response)
           [].tap do |result|
             loop do
-              result << parse_peer(parser)
+              result << parse_peer(parser, obj)
               break unless parser.current == ','
               parser.step
             end
           end
         end
 
-        def parse_peer(parser)
+        def parse_peer(parser, obj)
           ::Aerospike::Peer.new.tap do |peer|
             parser.expect('[')
             peer.node_name = parser.read_until(',')
             peer.tls_name = parser.read_until(',')
             peer.hosts = parse_hosts(parser, peer)
+            # Assign default port if missing
+            peer.hosts.each do |host|
+              host.port ||= obj.port_default
+            end
             parser.expect(']')
           end
         end
@@ -54,16 +58,6 @@ module Aerospike
           parser.expect('[')
           return [] if parser.current == ']'
 
-          [].tap do |result|
-            loop do
-              result << parse_host(parser, peer)
-              break unless parser.current == ','
-              parser.step
-            end
-          end
-        end
-
-        def parse_host(parser, peer)
           # TODO(wallin): handle IPv6
           raise ::Aerospike::Exceptions::Parse if parser.current == '['
           parser.read_until(']').split(',').map do |host|
