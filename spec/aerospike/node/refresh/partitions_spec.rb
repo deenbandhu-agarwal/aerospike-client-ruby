@@ -19,12 +19,14 @@ RSpec.describe Aerospike::Node::Refresh::Partitions do
   describe '::call' do
     subject(:refresh) { described_class.call(node, peers) }
 
-    before { allow(described_class).to receive(:should_refresh?).and_return(healthy) }
+    before do
+      allow(described_class).to receive(:tokenizer)
+      allow(described_class).to receive(:should_refresh?).and_return(healthy)
+    end
 
     context 'with healty node' do
       before { refresh }
 
-      it { expect(node).to have_received(:tend_connection) }
       it { expect(cluster).to have_received(:update_partitions) }
     end
 
@@ -33,7 +35,7 @@ RSpec.describe Aerospike::Node::Refresh::Partitions do
 
       before { refresh }
 
-      it { expect(node).not_to have_received(:tend_connection) }
+      it { expect(cluster).not_to have_received(:update_partitions) }
     end
 
     context 'when cluster.update_partitions fails' do

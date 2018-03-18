@@ -10,7 +10,7 @@ module Aerospike
 
             node.cluster.update_partitions(tokenizer(node), node)
           rescue ::Aerospike::Exceptions::Aerospike => e
-            conn.close if conn
+            node.tend_connection.close
             Refresh::Failed.(node, e)
           end
 
