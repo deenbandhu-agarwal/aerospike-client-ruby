@@ -161,11 +161,6 @@ module Aerospike
       @failures.value = 0
     end
 
-    # Returns node name
-    def get_name
-      @name
-    end
-
     # Returns node aliases
     def get_aliases
       @aliases.value

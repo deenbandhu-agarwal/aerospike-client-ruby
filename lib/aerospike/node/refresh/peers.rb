@@ -8,6 +8,8 @@ module Aerospike
           def call(node, peers)
             return unless should_refresh?(node)
 
+            ::Aerospike.logger.debug("Update peers for node #{node.name}")
+
             collection = ::Aerospike::Peers::Fetch.(node.cluster, node.tend_connection)
             peers.peers = collection.peers
             node.peers_count.value = peers.peers.size

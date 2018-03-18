@@ -6,7 +6,7 @@ module Aerospike
       module Failed
         class << self
           def call(node, e)
-            Aerospike.logger.info("Node #{node.get_name} refresh failed #{e.inspect}")
+            Aerospike.logger.info("Node #{node.name} refresh failed #{e.inspect}")
             node.failures.update { |v| v + 1 }
           end
         end

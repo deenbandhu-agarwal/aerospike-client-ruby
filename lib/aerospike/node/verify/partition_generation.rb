@@ -17,7 +17,7 @@ module Aerospike
             node.partition_generation.update(generation)
 
             return unless node.partition_generation.changed?
-            Aerospike.logger.info("Node #{node.get_name} partition generation #{generation} changed")
+            Aerospike.logger.info("Node #{node.name} partition generation #{generation} changed")
           end
         end
       end

@@ -88,7 +88,7 @@ module Aerospike
     #  Returns list of active server node names in the cluster.
 
     def node_names
-      @cluster.nodes.map(&:get_name)
+      @cluster.nodes.map(&:name)
     end
 
     def supports_feature?(feature)
