@@ -20,7 +20,7 @@ module Aerospike
             sock.connect_nonblock(sockaddr)
           rescue Errno::EISCONN
           rescue => e
-            raise e
+            raise ::Aerospike::Exceptions::Connection.new("#{e}")
           end
         end
 

@@ -41,6 +41,8 @@ module Aerospike
           else
             raise ::Aerospike::Exceptions::Connection.new("#{e}")
           end
+        rescue => e
+          raise ::Aerospike::Exceptions::Connection.new("#{e}")
         end
       end
 
@@ -60,6 +62,8 @@ module Aerospike
           else
             raise ::Aerospike::Exceptions::Connection.new("#{e}")
           end
+        rescue => e
+          raise ::Aerospike::Exceptions::Connection.new("#{e}")
         end
       end
 
