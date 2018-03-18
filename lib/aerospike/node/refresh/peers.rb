@@ -10,32 +10,34 @@ module Aerospike
 
             ::Aerospike.logger.debug("Update peers for node #{node.name}")
 
-            collection = ::Aerospike::Peers::Fetch.(node.cluster, node.tend_connection)
+            cluster = node.cluster
+
+            collection = ::Aerospike::Peers::Fetch.(cluster, node.tend_connection)
             peers.peers = collection.peers
             node.peers_count.value = peers.peers.size
             peers_validated = true
 
             peers.peers.each do |peer|
-              next if ::Aerospike::Cluster::FindNode.(node.cluster, peers, peer.node_name)
+              next if ::Aerospike::Cluster::FindNode.(cluster, peers, peer.node_name)
 
               node_validated = false
 
               peer.hosts.each do |host|
                 begin
-                  nv = NodeValidator.new(node.cluster, host, node.cluster.connection_timeout, node.cluster.cluster_name, node.cluster.ssl_options)
+                  nv = NodeValidator.new(cluster, host, cluster.connection_timeout, cluster.cluster_name, cluster.ssl_options)
 
                   if nv.name != peer.node_name
                     ::Aerospike.logger.warn("Peer node #{peer.node_name} is different than actual node #{nv.name} for host #{host}");
                     # Must look for new node name in the unlikely event that node names do not agree.
                     # Node already exists. Do not even try to connect to hosts.
-                    if Cluster::FindNode.(node.cluster, peers, nv.name)
+                    if Cluster::FindNode.(cluster, peers, nv.name)
                       node_validated = true
                       break;
                     end
                   end
 
-                  node = node.cluster.create_node(nv)
-                  peers.nodes[nv.name] = node
+                  new_node = cluster.create_node(nv)
+                  peers.nodes[nv.name] = new_node
                   node_validated = true
                   break;
                 rescue ::Aerospike::Exceptions::Aerospike => e
