@@ -8,6 +8,7 @@ module Aerospike
         class << self
           def call(node, peers, info_map)
             friend_string = info_map['services']
+            cluster = node.cluster
 
             if friend_string.to_s.empty?
               node.peers_count.value = 0
@@ -20,13 +21,13 @@ module Aerospike
             friend_names.each do |friend|
               hostname, port = friend.split(':')
               host = Host.new(hostname, port.to_i)
-              node = node.cluster.find_alias(host)
+              found_node = cluster.find_alias(host)
 
-              if node
-                node.increase_reference_count!
+              if found_node
+                found_node.increase_reference_count!
               else
                 unless peers.hosts.include?(host)
-                  prepare(node.cluster, peers, host)
+                  prepare(cluster, peers, host)
                 end
               end
             end
