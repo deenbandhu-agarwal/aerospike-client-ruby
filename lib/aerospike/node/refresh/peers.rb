@@ -10,6 +10,7 @@ module Aerospike
 
             collection = ::Aerospike::Peers::Fetch.(node.cluster, node.tend_connection)
             peers.peers = collection.peers
+            node.peers_count.value = peers.peers.size
             peers_validated = true
 
             peers.peers.each do |peer|
