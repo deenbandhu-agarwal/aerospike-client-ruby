@@ -234,6 +234,7 @@ module Aerospike
       # Clear node reference count
       nodes.each do |node|
         node.reset_reference_count!
+        node.reset_responded!
         node.partition_generation.reset_changed!
         # Using peers is default true
         peers.use_peers = false unless node.supports_feature?('peers')
