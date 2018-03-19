@@ -220,6 +220,20 @@ module Aerospike
 
     # Check health of all nodes in cluster
     def tend
+      was_changed = refresh_nodes
+
+      return unless was_changed
+
+      update_cluster_features
+      notify_cluster_config_changed
+      # only log the tend finish IF the number of nodes has been changed.
+      # This prevents spamming the log on every tend interval
+      log_tend_stats(nodes)
+    end
+
+    # Refresh status of all nodes in cluster. Adds new nodes and/or removes
+    # unhealty ones
+    def refresh_nodes
       cluster_config_changed = false
 
       nodes = self.nodes
@@ -273,13 +287,7 @@ module Aerospike
         cluster_config_changed = true
       end
 
-      return unless cluster_config_changed
-
-      update_cluster_features
-      notify_cluster_config_changed
-      # only log the tend finish IF the number of nodes has been changed.
-      # This prevents spamming the log on every tend interval
-      log_tend_stats(nodes)
+      cluster_config_changed
     end
 
     def log_tend_stats(nodes)
