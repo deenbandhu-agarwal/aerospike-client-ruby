@@ -42,7 +42,7 @@ module Aerospike
               cluster.ssl_options
             )
 
-            node = peers.nodes[nv.name]
+            node = peers.find_node_by_name(nv.name)
 
             unless node.nil?
               peers.hosts << host
@@ -50,20 +50,13 @@ module Aerospike
               return true
             end
 
-            node = Cluster::FindNode.(cluster, peers, nv.name)
+            node = cluster.find_node_by_name(nv.name)
 
             unless node.nil?
               peers.hosts << host
               node.aliases << host
+              # Only increase reference count if found in cluster
               node.increase_reference_count!
-              cluster.aliases[host.to_s] = node
-              return true
-            end
-
-            node = ::Aerospike::Cluster::FindNode.(cluster, peers, nv.name)
-            unless node.nil?
-              peers.hosts << host
-              node.aliases << host
               cluster.add_alias(host, node)
               return true
             end
