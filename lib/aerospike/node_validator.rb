@@ -33,20 +33,12 @@ module Aerospike
       set_address(timeout)
     end
 
+    private
+
     def set_aliases(host)
-      is_ip = !!((host =~ Resolv::IPv4::Regex) || (host =~ Resolv::IPv6::Regex))
-
-      addresses = if is_ip
-                    # Don't try to resolve IP addresses.
-                    # May fail in different OS or network setups
-                     host
-                  else
-                    Resolv.getaddresses(host.name)
-      end
-
+      addresses = resolve(host.name)
       @aliases = addresses.map { |addr| Host.new(addr, host.port, host.tls_name) }
-
-      Aerospike.logger.debug("Node Validator has #{aliases.length} nodes.")
+      Aerospike.logger.debug("Node Validator found #{aliases.length} addresses for host #{host}: #{@aliases}")
     end
 
     def set_address(timeout)
@@ -75,7 +67,19 @@ module Aerospike
       end
     end
 
-    protected
+    def resolve(hostname)
+      if is_ip?(hostname)
+        # Don't try to resolve IP addresses.
+        # May fail in different OS or network setups
+        [hostname]
+      else
+        Resolv.getaddresses(hostname)
+      end
+    end
+
+    def is_ip?(hostname)
+      !!((hostname =~ Resolv::IPv4::Regex) || (hostname =~ Resolv::IPv6::Regex))
+    end
 
     def parse_version_string(version)
       if v = VERSION_REGEXP.match(version)
