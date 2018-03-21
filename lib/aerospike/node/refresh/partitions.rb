@@ -18,10 +18,10 @@ module Aerospike
           def tokenizer(node)
             conn = node.tend_connection
             if node.use_new_info?
-              Aerospike.logger.info('Updating partitions using new protocol...')
+              Aerospike.logger.info("Updating partitions for node #{node.name} using new protocol")
               PartitionTokenizerNew.new(conn)
             else
-              Aerospike.logger.info('Updating partitions using old protocol...')
+              Aerospike.logger.info("Updating partitions for node #{node.name} using old protocol")
               PartitionTokenizerOld.new(conn)
             end
           end

@@ -10,6 +10,8 @@ module Aerospike
             friend_string = info_map['services']
             cluster = node.cluster
 
+            Aerospike.logger.debug("Refreshing friends for node #{node.name}: services=#{friend_string}")
+
             if friend_string.to_s.empty?
               node.peers_count.value = 0
               return
@@ -25,6 +27,7 @@ module Aerospike
 
               if found_node
                 found_node.increase_reference_count!
+                Aerospike.logger.debug("Found existing node #{found_node.name} for host #{host}: Increased ref count to #{found_node.reference_count.value}")
               else
                 unless peers.hosts.include?(host)
                   prepare(cluster, peers, host)
@@ -34,6 +37,7 @@ module Aerospike
           end
 
           def prepare(cluster, peers, host)
+            Aerospike.logger.debug("Preparing to add new node for host #{host}")
             nv = NodeValidator.new(
               cluster,
               host,
@@ -45,6 +49,7 @@ module Aerospike
             node = peers.find_node_by_name(nv.name)
 
             unless node.nil?
+              Aerospike.logger.debug("Found existing node #{node.name} among peers for host #{host}")
               peers.hosts << host
               node.aliases << host
               return true
@@ -53,6 +58,7 @@ module Aerospike
             node = cluster.find_node_by_name(nv.name)
 
             unless node.nil?
+              Aerospike.logger.debug("Found existing node #{node.name} in cluster for host #{host}")
               peers.hosts << host
               node.aliases << host
               # Only increase reference count if found in cluster
@@ -61,11 +67,13 @@ module Aerospike
               return true
             end
 
+            Aerospike.logger.debug("No existing node found - creating new node #{nv.name} for host #{host}")
             node = cluster.create_node(nv)
             peers.hosts << host
             peers.nodes[nv.name] = node
             true
-          rescue ::Aerospike::Exceptions::Aerospike
+          rescue ::Aerospike::Exceptions::Aerospike => e
+            ::Aerospike.logger.warn("Add node for host #{host} failed: #{e}")
             false
           end
         end

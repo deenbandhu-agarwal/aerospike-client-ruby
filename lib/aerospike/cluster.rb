@@ -168,7 +168,7 @@ module Aerospike
       # update partition write map
       set_partitions(nmap) if nmap
 
-      Aerospike.logger.info('Partitions updated...')
+      Aerospike.logger.info("Partitions for node #{node.name} updated")
     end
 
     def request_info(policy, *commands)
@@ -213,6 +213,7 @@ module Aerospike
             sleep(@tend_interval / 1000.0)
           rescue => e
             Aerospike.logger.error("Exception occured during tend: #{e}")
+            Aerospike.logger.debug { e.backtrace.join("\n") }
           end
         end
       end
