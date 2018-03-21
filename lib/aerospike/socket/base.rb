@@ -74,6 +74,11 @@ module Aerospike
       def connected?
         !closed?
       end
+
+      def close
+        return if closed?
+        super()
+      end
     end
   end
 end
