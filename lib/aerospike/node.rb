@@ -161,20 +161,8 @@ module Aerospike
       @failures.value = 0
     end
 
-    # Returns node aliases
-    def get_aliases
+    def aliases
       @aliases.value
-    end
-
-    # Adds an alias for the node
-    def add_alias(alias_to_add)
-      # Aliases are only referenced in the cluster tend threads,
-      # so synchronization is not necessary.
-      aliases = get_aliases
-      aliases ||= []
-
-      aliases << alias_to_add
-      set_aliases(aliases)
     end
 
     # Marks node as inactice and closes all cached connections
@@ -213,11 +201,6 @@ module Aerospike
       while conn = @connections.poll(false)
         conn.close if conn
       end
-    end
-
-    # Sets node aliases
-    def set_aliases(aliases)
-      @aliases.value = aliases
     end
   end # class Node
 end # module

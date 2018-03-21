@@ -488,7 +488,7 @@ module Aerospike
     def add_aliases(node)
       # Add node's aliases to global alias set.
       # Aliases are only used in tend thread, so synchronization is not necessary.
-      node.get_aliases.each do |aliass|
+      node.aliases.each do |aliass|
         @aliases[aliass] = node
       end
     end
@@ -508,7 +508,7 @@ module Aerospike
       nodes_to_remove.each do |node|
         # Remove node's aliases from cluster alias set.
         # Aliases are only used in tend thread, so synchronization is not necessary.
-        node.get_aliases.each do |aliass|
+        node.aliases.each do |aliass|
           Aerospike.logger.debug("Removing alias #{aliass}")
           remove_alias(aliass)
         end
