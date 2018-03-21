@@ -17,11 +17,19 @@ module Aerospike
         rescue IO::WaitWritable, Errno::EINPROGRESS
           ::IO.select(nil, [sock], nil, timeout)
 
+          # Because IO.select behaves (return values are different) differently on
+          # different rubies, lets just try `connect_noblock` again. An exception
+          # is raised to indicate the current state of the connection, and at this
+          # point, we are ready to decide if this is a success or a timeout.
           begin
             sock.connect_nonblock(sockaddr)
           rescue Errno::EISCONN
+            # Good, we're connected.
+          rescue Errno::EINPROGRESS, Errno::EALREADY
+            # Bad, we're still waiting to connect.
+            raise ::Aerospike::Exceptions::Connection, "Connection attempt to #{host}:#{port} timed out after #{timeout} secs"
           rescue => e
-            raise ::Aerospike::Exceptions::Connection.new("#{e}")
+            raise ::Aerospike::Exceptions::Connection, e.message
           end
         end
 
