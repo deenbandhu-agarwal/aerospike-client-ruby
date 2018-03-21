@@ -416,42 +416,6 @@ module Aerospike
       end
     end
 
-    def find_nodes_to_add(hosts)
-      list = []
-
-      hosts.each do |host|
-        begin
-          nv = NodeValidator.new(self, host, @connection_timeout, @cluster_name, ssl_options)
-
-          # if node is already in cluster's node list,
-          # or already included in the list to be added, we should skip it
-          node = find_node_by_name(nv.name)
-          node ||= list.detect{|n| n.name == nv.name}
-
-          # make sure node is not already in the list to add
-          if node
-            # Duplicate node name found.  This usually occurs when the server
-            # services list contains both internal and external IP addresses
-            # for the same node.  Add new host to list of alias filters
-            # and do not add new node.
-            node.increase_reference_count!
-            node.add_alias(host)
-            add_alias(host, node)
-            next
-          end
-
-          node = create_node(nv)
-          list << node
-
-        rescue => e
-          Aerospike.logger.error("Add node #{node} failed: #{e}")
-          Aerospike.logger.error(e.backtrace.join("\n"))
-        end
-      end
-
-      list
-    end
-
     def create_node(nv)
       ::Aerospike::Node.new(self, nv)
     end
